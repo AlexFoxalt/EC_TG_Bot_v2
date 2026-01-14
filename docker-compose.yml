@@ -1,0 +1,129 @@
+services:
+  postgres:
+    image: postgres:${POSTGRES_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+    # Bind only to localhost by default to avoid exposing Postgres to your LAN.
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Store data under a subdir to avoid permission edge-cases on some hosts.
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # Enforce password auth for both TCP and local socket connections.
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+
+    # Keep config minimal and explicit.
+    command:
+      - postgres
+      - -c
+      - password_encryption=scram-sha-256
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1 -p 5432"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    # Improves performance for workloads that use larger temp buffers.
+    shm_size: "256mb"
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app_network
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database connection
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Telegram bot
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN:?set TELEGRAM_TOKEN in .env}
+      # Notification polling interval
+      NOTIFICATION_POLL_INTERVAL_SECONDS: ${NOTIFICATION_POLL_INTERVAL_SECONDS:-10}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOGURU_COLORIZE: ${LOGURU_COLORIZE:-true}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app_network
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.scheduler
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database connection
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Tapo device credentials
+      TAPO_EMAIL: ${TAPO_EMAIL:?set TAPO_EMAIL in .env}
+      TAPO_PASSWORD: ${TAPO_PASSWORD:?set TAPO_PASSWORD in .env}
+      TAPO_DEVICE_IP: ${TAPO_DEVICE_IP:?set TAPO_DEVICE_IP in .env}
+      # Polling interval
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-60}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOGURU_COLORIZE: ${LOGURU_COLORIZE:-true}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
