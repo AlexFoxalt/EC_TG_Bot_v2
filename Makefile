@@ -18,3 +18,9 @@ init_db:
 
 refresh_db:
 	python3 refresh_db.py
+
+logs:
+	docker compose logs -f
+
+logs-last-100:
+	docker compose logs --tail=100
