@@ -48,7 +48,7 @@ services:
   bot:
     build:
       context: .
-      dockerfile: Dockerfile.bot
+      dockerfile: docker/Dockerfile.bot
     restart: unless-stopped
     stop_grace_period: 30s
     depends_on:
@@ -64,7 +64,7 @@ services:
       # Telegram bot
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN:?set TELEGRAM_TOKEN in .env}
       # Notification polling interval
-      NOTIFICATION_POLL_INTERVAL_SECONDS: ${NOTIFICATION_POLL_INTERVAL_SECONDS:-10}
+      BOT_NOTIFICATION_POLL_INTERVAL_SECONDS: ${BOT_NOTIFICATION_POLL_INTERVAL_SECONDS:-60}
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOGURU_COLORIZE: ${LOGURU_COLORIZE:-true}
@@ -85,7 +85,7 @@ services:
   scheduler:
     build:
       context: .
-      dockerfile: Dockerfile.scheduler
+      dockerfile: docker/Dockerfile.scheduler
     restart: unless-stopped
     stop_grace_period: 30s
     depends_on:
@@ -98,13 +98,38 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-app}
       POSTGRES_USER: ${POSTGRES_USER:-app}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      # Tapo device credentials
-      TAPO_EMAIL: ${TAPO_EMAIL:?set TAPO_EMAIL in .env}
-      TAPO_PASSWORD: ${TAPO_PASSWORD:?set TAPO_PASSWORD in .env}
-      TAPO_DEVICE_IP: ${TAPO_DEVICE_IP:?set TAPO_DEVICE_IP in .env}
       # Polling interval
-      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-60}
+      LISTEN_HEARTBEAT_INTERVAL_SECONDS: ${LISTEN_HEARTBEAT_INTERVAL_SECONDS:-10}
       # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOGURU_COLORIZE: ${LOGURU_COLORIZE:-true}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app_network
+
+  pi_server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.pi_server
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      - "${PI_SERVER_PORT:-5566}:5566"
+    environment:
+      PI_SERVER_HOST: ${PI_SERVER_HOST:-0.0.0.0}
+      PI_SERVER_PORT: ${PI_SERVER_PORT:-5566}
+      HEARTBEAT_PATH: ${HEARTBEAT_PATH:-/heartbeat}
+      HEARTBEAT_TOKEN: ${HEARTBEAT_TOKEN:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOGURU_COLORIZE: ${LOGURU_COLORIZE:-true}
     healthcheck:

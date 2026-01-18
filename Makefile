@@ -7,17 +7,26 @@ fix:
 docker_build:
 	docker compose up -d --build
 
+docker_stop:
+	docker compose stop
+
 run_scheduler:
-	python3 scheduler.py
+	python3 entrypoints/scheduler.py
 
 run_bot:
-	python3 bot.py
+	python3 entrypoints/bot.py
+
+run_pi_client:
+	python3 entrypoints/start_pi_client.py
+
+run_pi_server:
+	python3 entrypoints/start_pi_server.py
 
 init_db:
-	python3 init_db.py
+	python3 entrypoints/init_db.py
 
 refresh_db:
-	python3 refresh_db.py
+	python3 entrypoints/refresh_db.py
 
 logs:
 	docker compose logs -f

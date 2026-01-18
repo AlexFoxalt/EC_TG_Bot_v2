@@ -1,4 +1,4 @@
-# Multi-stage build for scheduler application
+# Multi-stage build for bot application
 FROM python:3.14-slim AS builder
 
 # Set build arguments
@@ -42,5 +42,5 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
 
-# Run the scheduler
-CMD ["python", "scheduler.py"]
+# Run the bot
+CMD ["python", "entrypoints/bot.py"]

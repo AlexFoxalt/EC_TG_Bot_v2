@@ -577,7 +577,7 @@ async def check_and_send_notifications() -> None:
                 return
 
             # Status has changed - get all users with notifications enabled
-            users_result = await session.execute(select(User).where(User.notifs_enabled == True))
+            users_result = await session.execute(select(User).where(User.notifs_enabled == True))  # noqa
             users = users_result.scalars().all()
 
             if not users:
@@ -654,7 +654,7 @@ def start_bot() -> None:
 
     app.job_queue.run_repeating(
         notification_job,
-        interval=float(os.getenv("NOTIFICATION_POLL_INTERVAL_SECONDS", "5")),
+        interval=float(os.getenv("BOT_NOTIFICATION_POLL_INTERVAL_SECONDS", "60")),
         first=1,  # Start after 1 second
     )
     logger.bind(username="system").info("Notification polling task scheduled")

@@ -26,7 +26,7 @@ Optional variables:
 ```bash
 docker compose up -d postgres
 # Wait for postgres to be healthy, then:
-docker compose run --rm bot python init_db.py
+docker compose run --rm bot python entrypoints/init_db.py
 ```
 
 - **3) Start all services**:
