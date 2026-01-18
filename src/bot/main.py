@@ -36,6 +36,8 @@ if TYPE_CHECKING:
 KYIV_TZ = ZoneInfo("Europe/Kyiv")
 NIGHT_START_HOUR = 20  # 20:00 Ukraine time
 NIGHT_END_HOUR = 6  # 06:00 Ukraine time
+SECS_IN_MINUTE = 60
+MINS_IN_HOUR = 60
 
 # Button texts
 BUTTON_GET_STATUS = "💡 Узнать статус 💡"
@@ -468,7 +470,7 @@ async def handle_get_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
         # Determine status message
         is_on = latest_status.value
-        status_text = "🟢 Сейчас электричество ЕСТЬ! 🟢" if is_on else "🔴 Сейчас электричества НЕТ. 🔴"
+        status_text = "🟢 Электричество ЕСТЬ! 🟢" if is_on else "🔴 Электричества НЕТ 🔴"
         datetime_text = "📅 Время включения: " if is_on else "📅 Время отключения: "
         date_created_timezone = latest_status.date_created.astimezone(KYIV_TZ)
         logger.bind(username="system").info(
@@ -506,7 +508,7 @@ async def _send_message_with_retry(user_id: int, message_text: str, disable_soun
 
 
 async def send_status_notification(
-    user_id: int, from_status: bool, to_status: bool, disable_sound: bool = False
+    user_id: int, from_status: bool, to_status: bool, time_diff: int | None, disable_sound: bool = False
 ) -> None:
     """Send status change notification to a user with retry logic.
 
@@ -517,19 +519,40 @@ async def send_status_notification(
         logger.bind(username="system").error("Bot application not initialized - cannot send notification")
         return
 
-    from_text = "ON" if from_status else "OFF"
     to_text = "ON" if to_status else "OFF"
     to_emoji = "🟢" if to_status else "🔴"
 
-    message_text = (
-        f"❗️️ Произошли изменения: {from_text} → {to_text}  ❗️\n"
-        f"{to_emoji}  Электричество теперь: {to_text}  {to_emoji}\n\n"
-        f"_Вы получили это сообщение потому что включили уведомления в настройках бота\\. "
-        f"Их можно в любой момент отключить\\._"
+    changes_text = f"📢️  ВНИМАНИЕ  📢\n\n{to_emoji}  Электричество {to_text}  {to_emoji}\n"
+
+    time_diff_text = ""
+    if time_diff:
+        diff_mins = time_diff // SECS_IN_MINUTE
+        if diff_mins > MINS_IN_HOUR:
+            # Convert minutes to hours if it's possible.
+            # "100500 mins elapsed" message looks weird.
+            diff_hours = diff_mins // MINS_IN_HOUR
+            diff_mins = diff_mins % MINS_IN_HOUR
+
+            if diff_mins == 0:
+                text_suffix = f"{diff_hours} ч\\."
+            else:
+                text_suffix = f"{diff_hours} ч\\. и {diff_mins} мин\\."
+        else:
+            text_suffix = f"{diff_mins} мин\\."
+
+        if from_status and not to_status:
+            time_diff_text = f"⏳Свет был {text_suffix}\n\n"
+        elif not from_status and to_status:
+            time_diff_text = f"⏳Света не было {text_suffix}\n\n"
+
+    footer_text = (
+        "_Вы получили это сообщение потому что включили уведомления в настройках бота\\. "
+        "Их можно в любой момент отключить\\._"
     )
+    final_text = changes_text + time_diff_text + footer_text
 
     try:
-        await _send_message_with_retry(user_id, message_text, disable_sound)
+        await _send_message_with_retry(user_id, final_text, disable_sound)
         logger.bind(username="system").info(
             f"Sent status notification to user_id={user_id}, sound_disabled={disable_sound}"
         )
@@ -592,6 +615,10 @@ async def check_and_send_notifications() -> None:
                 f"is_night={is_night}, notifying {len(users)} users"
             )
 
+            time_diff = None
+            if latest_status and previous_status:
+                time_diff = (latest_status.date_created - previous_status.date_created).seconds
+
             # Send notifications to all enabled users
             # Each notification is sent independently - failures won't stop the loop
             for user in users:
@@ -602,6 +629,7 @@ async def check_and_send_notifications() -> None:
                         user_id=user.id,
                         from_status=previous_status.value,
                         to_status=latest_status.value,
+                        time_diff=time_diff,
                         disable_sound=disable_sound,
                     )
                 except Exception as e:
@@ -652,12 +680,13 @@ def start_bot() -> None:
     async def notification_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         await check_and_send_notifications()
 
+    interval = float(os.getenv("BOT_NOTIFICATION_POLL_INTERVAL_SECONDS", "60"))
     app.job_queue.run_repeating(
         notification_job,
-        interval=float(os.getenv("BOT_NOTIFICATION_POLL_INTERVAL_SECONDS", "60")),
+        interval=interval,
         first=1,  # Start after 1 second
     )
-    logger.bind(username="system").info("Notification polling task scheduled")
+    logger.bind(username="system").info(f"Notification polling task scheduled every {interval:.1f}s secs...")
 
     logger.bind(username="system").info("Bot started and ready to receive messages - starting polling...")
     app.run_polling()
