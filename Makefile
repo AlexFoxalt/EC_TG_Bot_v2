@@ -33,3 +33,6 @@ logs:
 
 logs-last-100:
 	docker compose logs --tail=100
+
+systemd_logs:
+	journalctl -u pi-client
