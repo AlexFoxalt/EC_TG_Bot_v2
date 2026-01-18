@@ -1,3 +1,4 @@
+import asyncio
 import os
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
@@ -677,7 +678,7 @@ def start_bot() -> None:
     app.add_handler(MessageHandler(filters.Regex(f"^{BUTTON_REPORT_ERROR}$"), handle_report_error))
 
     # Start notification polling task
-    async def notification_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def notification_job(_: ContextTypes.DEFAULT_TYPE) -> None:
         await check_and_send_notifications()
 
     interval = float(os.getenv("BOT_NOTIFICATION_POLL_INTERVAL_SECONDS", "60"))
