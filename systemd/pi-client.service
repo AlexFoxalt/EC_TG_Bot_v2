@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=admin
+User=mypi
 WorkingDirectory=/home/mypi/EC_TG_Bot_v2
 ExecStart=/bin/bash -lc "cd /home/mypi/EC_TG_Bot_v2 && source .venv/bin/activate && python3 entrypoints/start_pi_client.py"
 Restart=always
