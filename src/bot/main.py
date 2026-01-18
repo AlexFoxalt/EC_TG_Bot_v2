@@ -24,6 +24,7 @@ from tenacity import (
     retry_if_exception,
     before_sleep_log,
 )
+from aiolimiter import AsyncLimiter
 
 from src.db.models import User, Status
 from src.logger.main import logger
@@ -54,6 +55,8 @@ ERROR_SESSION_EXPIRED = "Срок жизни сессии истек. Пожал
 session_factory: async_sessionmaker[AsyncSession] | None = None
 bot_app: Application | None = None
 last_notified_status_id: int | None = None
+notification_rate_limiter: AsyncLimiter | None = None
+notification_semaphore: asyncio.Semaphore | None = None
 
 
 def _is_retryable_telegram_exception(exc: Exception) -> bool:
@@ -499,13 +502,17 @@ async def _send_message_with_retry(user_id: int, message_text: str, disable_soun
     """
     if bot_app is None:
         raise RuntimeError("Bot application not initialized")
+    if notification_rate_limiter is None or notification_semaphore is None:
+        raise RuntimeError("Notification limiter not initialized")
 
-    await bot_app.bot.send_message(
-        chat_id=user_id,
-        text=message_text,
-        parse_mode=ParseMode.MARKDOWN_V2,
-        disable_notification=disable_sound,
-    )
+    async with notification_semaphore:
+        async with notification_rate_limiter:
+            await bot_app.bot.send_message(
+                chat_id=user_id,
+                text=message_text,
+                parse_mode=ParseMode.MARKDOWN_V2,
+                disable_notification=disable_sound,
+            )
 
 
 async def send_status_notification(
@@ -560,6 +567,31 @@ async def send_status_notification(
     except Exception as e:
         # Final failure after all retries - log but don't raise to continue loop
         logger.bind(username="system").error(f"Failed to send notification to user_id={user_id} after retries: {e!r}")
+
+
+async def _send_notification_task(
+    user: User,
+    previous_status: Status,
+    latest_status: Status,
+    time_diff: int | None,
+    is_night: bool,
+) -> None:
+    if notification_rate_limiter is None or notification_semaphore is None:
+        logger.bind(username="system").error("Notification limiter not initialized - skipping send task")
+        return
+
+    try:
+        disable_sound = is_night and not user.night_notif_sound_enabled
+        await send_status_notification(
+            user_id=user.id,
+            from_status=previous_status.value,
+            to_status=latest_status.value,
+            time_diff=time_diff,
+            disable_sound=disable_sound,
+        )
+    except Exception as e:
+        logger.bind(username="system").error(f"Notification task failed for user_id={user.id}: {e!r}")
+        return
 
 
 async def check_and_send_notifications() -> None:
@@ -620,23 +652,16 @@ async def check_and_send_notifications() -> None:
             if latest_status and previous_status:
                 time_diff = (latest_status.date_created - previous_status.date_created).seconds
 
-            # Send notifications to all enabled users
-            # Each notification is sent independently - failures won't stop the loop
-            for user in users:
-                try:
-                    # Disable sound if it's night time and user has night sound disabled
-                    disable_sound = is_night and not user.night_notif_sound_enabled
-                    await send_status_notification(
-                        user_id=user.id,
-                        from_status=previous_status.value,
-                        to_status=latest_status.value,
-                        time_diff=time_diff,
-                        disable_sound=disable_sound,
-                    )
-                except Exception as e:
-                    # Extra safety: catch any unexpected exceptions to ensure loop continues
+            # Send notifications to all enabled users concurrently with rate limiting
+            tasks = [
+                asyncio.create_task(_send_notification_task(user, previous_status, latest_status, time_diff, is_night))
+                for user in users
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for result in results:
+                if isinstance(result, Exception):
                     logger.bind(username="system").error(
-                        f"Unexpected error sending notification to user_id={user.id}: {e!r}"
+                        f"Notification task failed with unexpected exception: {result!r}"
                     )
 
             # Update last notified status ID
@@ -651,7 +676,7 @@ async def check_and_send_notifications() -> None:
 
 def start_bot() -> None:
     """Initialize and start the Telegram bot."""
-    global session_factory, bot_app
+    global session_factory, bot_app, notification_rate_limiter, notification_semaphore
 
     logger.bind(username="system").info("Initializing Telegram bot...")
 
@@ -668,6 +693,18 @@ def start_bot() -> None:
     app = ApplicationBuilder().token(_require_env("TELEGRAM_TOKEN")).build()
     bot_app = app  # Store for notification sending
     logger.bind(username="system").info("Telegram application builder initialized")
+
+    rate_limit_per_sec = float(os.getenv("BOT_NOTIF_RATE_LIMIT_PER_SEC", "20"))
+    max_concurrency = int(os.getenv("BOT_NOTIF_MAX_CONCURRENCY", "10"))
+    if rate_limit_per_sec <= 0:
+        rate_limit_per_sec = 1.0
+    if max_concurrency <= 0:
+        max_concurrency = 1
+    notification_rate_limiter = AsyncLimiter(rate_limit_per_sec, time_period=1)
+    notification_semaphore = asyncio.Semaphore(max_concurrency)
+    logger.bind(username="system").info(
+        f"Notification rate limiting configured: {rate_limit_per_sec:.1f}/s, max_concurrency={max_concurrency}"
+    )
 
     # Add handlers
     app.add_handler(CommandHandler("start", start))
