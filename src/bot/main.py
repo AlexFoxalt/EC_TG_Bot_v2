@@ -223,7 +223,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         if existing_user:
             await update.message.reply_text(
-                f"Добро пожаловать, {user.first_name or user.username or 'Пользователь'}!",
+                f"Добро пожаловать, {user.first_name or user.username or 'Пользователь'}!\n\n"
+                f"Используйте клавиатуру ниже для взаимодействия с ботом 👇",
                 reply_markup=get_main_keyboard(),
             )
             return
