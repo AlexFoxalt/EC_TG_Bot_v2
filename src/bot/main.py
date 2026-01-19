@@ -523,6 +523,19 @@ async def handle_gen_status(update: Update, _: ContextTypes.DEFAULT_TYPE) -> Non
     username = get_username_from_update(update)
     logger.bind(username=username).info("User requested generator status")
 
+    async with session_factory() as session:
+        # Get latest status ordered by date_created DESC
+        result = await session.execute(select(Status).order_by(desc(Status.date_created)).limit(1))
+        latest_status = result.scalar_one_or_none()
+
+        if latest_status and latest_status.value:
+            message_text = "⚡️ В доме есть свет ⚡️\n\nГенератор не требуется"
+            await update.message.reply_text(
+                message_text,
+                reply_markup=get_main_keyboard(),
+            )
+            return
+
     curr_time = datetime.now(KYIV_TZ)
     gen_status, next_switch_td = is_generator_on(curr_time.hour, curr_time.minute)
 
