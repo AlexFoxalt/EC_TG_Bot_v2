@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
@@ -40,9 +40,22 @@ NIGHT_START_HOUR = 20  # 20:00 Ukraine time
 NIGHT_END_HOUR = 6  # 06:00 Ukraine time
 SECS_IN_MINUTE = 60
 MINS_IN_HOUR = 60
+GEN_WORKTIME_SCHEDULE = [
+    (0, 7 * 60, False),  # 00:00 - 07:00 break
+    (7 * 60, 10 * 60, True),  # 07:00 - 10:00 working
+    (10 * 60, 11 * 60, False),  # 10:00 - 11:00 break
+    (11 * 60, 14 * 60, True),  # 11:00 - 14:00 working
+    (14 * 60, 15 * 60, False),  # 14:00 - 15:00 break
+    (15 * 60, 18 * 60 + 30, True),  # 15:00 - 18:30 working
+    (18 * 60 + 30, 19 * 60, False),  # 18:30 - 19:00 break
+    (19 * 60, 21 * 60, True),  # 19:00 - 21:00 working
+    (21 * 60, 22 * 60, False),  # 21:00 - 22:00 break
+    (22 * 60, 24 * 60, True),  # 22:00 - 24:00 working
+]
 
 # Button texts
-BUTTON_GET_STATUS = "💡 Узнать статус 💡"
+BUTTON_POWER_STATUS = "💡 Свет 💡"
+BUTTON_GEN_STATUS = "🔋 Генератор 🔋"
 BUTTON_SETTINGS = "⚙️ Настройки ⚙️"
 BUTTON_REPORT_ERROR = "🆘 Сообщить об ошибке 🆘"
 
@@ -98,6 +111,18 @@ def _is_retryable_telegram_exception(exc: Exception) -> bool:
 
 
 # Helper functions
+def is_generator_on(hour: int, minute: int = 0) -> tuple[bool, timedelta]:
+    current_minutes = hour * 60 + minute
+
+    for start_time, end_time, is_on in GEN_WORKTIME_SCHEDULE:
+        if start_time <= current_minutes < end_time:
+            minutes_left = end_time - current_minutes
+            return is_on, timedelta(minutes=minutes_left)
+
+    # Safety fallback (should never happen)
+    return False, timedelta(0)
+
+
 def get_username_from_update(update: Update) -> str:
     """Extract username from update for logging."""
     user = update.effective_user
@@ -124,7 +149,8 @@ def get_username_from_query(query) -> str:
 def get_main_keyboard() -> ReplyKeyboardMarkup:
     """Get the main persistent keyboard for registered users."""
     keyboard = [
-        [KeyboardButton(BUTTON_GET_STATUS)],
+        [KeyboardButton(BUTTON_POWER_STATUS)],
+        [KeyboardButton(BUTTON_GEN_STATUS)],
         [KeyboardButton(BUTTON_SETTINGS), KeyboardButton(BUTTON_REPORT_ERROR)],
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
@@ -445,8 +471,7 @@ async def handle_report_error(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
 
 
-async def handle_get_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle 'Get status' button - retrieve latest electricity status."""
+async def handle_power_status(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     if session_factory is None:
         logger.bind(username="system").error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(ERROR_BOT_NOT_INITIALIZED)
@@ -454,7 +479,7 @@ async def handle_get_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     user = update.effective_user
     if user is None:
-        logger.bind(username="system").warning("Received get status request but effective_user is None")
+        logger.bind(username="system").warning("Received get power status request but effective_user is None")
         return
 
     username = get_username_from_update(update)
@@ -475,7 +500,7 @@ async def handle_get_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
         # Determine status message
         is_on = latest_status.value
-        status_text = "🟢 Электричество ЕСТЬ! 🟢" if is_on else "🔴 Электричества НЕТ 🔴"
+        status_text = "🟢 *Электричество ЕСТЬ*\\! 🟢" if is_on else "🔴 *Электричества НЕТ* 🔴"
         datetime_text = "📅 Время включения: " if is_on else "📅 Время отключения: "
         date_created_timezone = latest_status.date_created.astimezone(KYIV_TZ)
         logger.bind(username="system").info(
@@ -483,9 +508,53 @@ async def handle_get_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         )
 
         await update.message.reply_text(
-            f"{status_text}\n\n{datetime_text}{date_created_timezone:%H:%M %d.%m.%Y }",
+            f"{status_text}\n\n{datetime_text}{date_created_timezone:%H:%M %d\\.%m\\.%Y }",
             reply_markup=get_main_keyboard(),
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
+
+
+async def handle_gen_status(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    if user is None:
+        logger.bind(username="system").warning("Received get generator status request but effective_user is None")
+        return
+
+    username = get_username_from_update(update)
+    logger.bind(username=username).info("User requested generator status")
+
+    curr_time = datetime.now(KYIV_TZ)
+    gen_status, next_switch_td = is_generator_on(curr_time.hour, curr_time.minute)
+
+    next_switch_mins = next_switch_td.seconds // SECS_IN_MINUTE
+    if next_switch_mins > MINS_IN_HOUR:
+        # Convert minutes to hours if it's possible.
+        # "100500 mins elapsed" message looks weird.
+        next_switch_hours = next_switch_mins // MINS_IN_HOUR
+        next_switch_mins = next_switch_mins % MINS_IN_HOUR
+
+        if next_switch_mins == 0:
+            next_switch_sub_text = f"{next_switch_hours} ч\\."
+        else:
+            next_switch_sub_text = f"{next_switch_hours} ч\\. и {next_switch_mins} мин\\."
+    else:
+        next_switch_sub_text = f"{next_switch_mins} мин\\."
+
+    if gen_status:
+        message_text = "🔋 *Генератор РАБОТАЕТ* 🔋"
+        next_switch_text = f"⏳ До отключения: {next_switch_sub_text}"
+    else:
+        message_text = "🪫 *Генератор НЕ РАБОТАЕТ* 🪫"
+        next_switch_text = f"⏳ До включения: {next_switch_sub_text}"
+    footer_text = (
+        "_Обратите внимание, что работа генератора определяется через сверку с расписанием, "
+        "а не фактической проверкой\\. Поэтому реальность может отличаться\\!_"
+    )
+    await update.message.reply_text(
+        f"{message_text}\n{next_switch_text}\n\n{footer_text}",
+        reply_markup=get_main_keyboard(),
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
 
 
 @retry(
@@ -531,7 +600,7 @@ async def send_status_notification(
     to_text = "ON" if to_status else "OFF"
     to_emoji = "🟢" if to_status else "🔴"
 
-    changes_text = f"📢️  ВНИМАНИЕ  📢\n\n{to_emoji}  Электричество {to_text}  {to_emoji}\n"
+    changes_text = f"📢️  *ВНИМАНИЕ*  📢\n\n{to_emoji}  Электричество {to_text}  {to_emoji}\n"
 
     time_diff_text = ""
     if time_diff:
@@ -711,7 +780,8 @@ def start_bot() -> None:
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(handle_notification_choice, pattern="^notif_(yes|no)$"))
     app.add_handler(CallbackQueryHandler(handle_night_sound_choice, pattern="^night_sound_(yes|no)$"))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BUTTON_GET_STATUS}$"), handle_get_status))
+    app.add_handler(MessageHandler(filters.Regex(f"^{BUTTON_POWER_STATUS}$"), handle_power_status))
+    app.add_handler(MessageHandler(filters.Regex(f"^{BUTTON_GEN_STATUS}$"), handle_gen_status))
     app.add_handler(MessageHandler(filters.Regex(f"^{BUTTON_SETTINGS}$"), handle_notification_settings))
     app.add_handler(MessageHandler(filters.Regex(f"^{BUTTON_REPORT_ERROR}$"), handle_report_error))
 
