@@ -624,7 +624,7 @@ async def send_status_notification(
             time_diff_text = f"⏳Света не было {text_suffix}\n\n"
 
     footer_text = (
-        "_Вы получили это сообщение потому что включили уведомления в настройках бота\\. "
+        "_Вы получили это сообщение, потому что включили уведомления в настройках бота\\. "
         "Их можно в любой момент отключить\\._"
     )
     final_text = changes_text + time_diff_text + footer_text
