@@ -68,12 +68,6 @@ services:
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOGURU_COLORIZE: ${LOGURU_COLORIZE:-true}
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     logging:
       driver: json-file
       options:
@@ -103,12 +97,6 @@ services:
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOGURU_COLORIZE: ${LOGURU_COLORIZE:-true}
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     logging:
       driver: json-file
       options:
@@ -138,12 +126,6 @@ services:
       HEARTBEAT_TOKEN: ${HEARTBEAT_TOKEN:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOGURU_COLORIZE: ${LOGURU_COLORIZE:-true}
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     logging:
       driver: json-file
       options:
