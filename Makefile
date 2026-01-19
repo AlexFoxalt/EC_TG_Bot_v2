@@ -28,7 +28,10 @@ init_db:
 refresh_db:
 	python3 entrypoints/refresh_db.py
 
-logs:
+logs_compact:
+	docker compose logs -f bot scheduler pi_server
+
+logs_all:
 	docker compose logs -f
 
 logs-last-100:
