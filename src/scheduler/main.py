@@ -7,31 +7,33 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.db.models import Status, Heartbeat
+from src.enums import Label
 from src.logger.main import logger
 from src.utils import get_database_url
 
-HEARTBEAT_ID = 1
 LAST_SEEN_TIMESTAMP = None
 WAIT_TILL_MAKE_DECISION = 5
 
 
-async def get_heartbeat(session: AsyncSession) -> Heartbeat | None:
-    result = await session.execute(select(Heartbeat).where(Heartbeat.id == HEARTBEAT_ID).limit(1))
+async def get_heartbeat(session: AsyncSession, label: str) -> Heartbeat | None:
+    result = await session.execute(select(Heartbeat).where(Heartbeat.label == label).limit(1))
     return result.scalar_one_or_none()
 
 
-async def get_last_event_value(session: AsyncSession) -> Optional[bool]:
-    result = await session.execute(select(Status.value).order_by(Status.date_created.desc()).limit(1))
+async def get_last_event_value(session: AsyncSession, label: str) -> Optional[bool]:
+    result = await session.execute(
+        select(Status.value).where(Status.label == label).order_by(Status.date_created.desc()).limit(1)
+    )
     return result.scalar_one_or_none()
 
 
-async def record_event_if_changed(session: AsyncSession, value: bool) -> bool:
-    last_value = await get_last_event_value(session)
+async def record_event_if_changed(session: AsyncSession, value: bool, label: str) -> bool:
+    last_value = await get_last_event_value(session, label)
 
     if last_value is not None and last_value == value:
         return False
 
-    session.add(Status(value=value))
+    session.add(Status(value=value, label=label))
     await session.commit()
     return True
 
@@ -50,21 +52,22 @@ async def poll_once(session_factory: async_sessionmaker[AsyncSession], interval:
     global LAST_SEEN_TIMESTAMP
 
     async with session_factory() as session:
-        heartbeat = await get_heartbeat(session)
-        if not heartbeat:
-            logger.warning("Heartbeat not found")
-            return
+        for label in list(Label):
+            heartbeat = await get_heartbeat(session, label)
+            if not heartbeat:
+                logger.warning(f'Heartbeat labeled as "{label}" not found')
+                return
 
-        LAST_SEEN_TIMESTAMP = datetime.now(UTC)
-        power_value = detect_power_value(
-            current_dt=LAST_SEEN_TIMESTAMP, heartbeat_dt=heartbeat.timestamp, interval=interval
-        )
-        changed = await record_event_if_changed(session, power_value)
+            LAST_SEEN_TIMESTAMP = datetime.now(UTC)
+            power_value = detect_power_value(
+                current_dt=LAST_SEEN_TIMESTAMP, heartbeat_dt=heartbeat.timestamp, interval=interval
+            )
+            changed = await record_event_if_changed(session=session, value=power_value, label=label)
 
-        if changed:
-            from_v = "offline" if power_value else "online"
-            to_v = "online" if power_value else "offline"
-            logger.info(f"Device status changed: {from_v} -> {to_v}")
+            if changed:
+                from_v = "offline" if power_value else "online"
+                to_v = "online" if power_value else "offline"
+                logger.info(f"{label} device status changed: {from_v} -> {to_v}")
 
 
 async def run_polling_loop() -> None:
@@ -80,7 +83,7 @@ async def run_polling_loop() -> None:
     try:
         while True:
             try:
-                await poll_once(session_factory, int(interval_s))
+                await poll_once(session_factory=session_factory, interval=int(interval_s))
             except Exception as exc:
                 # Keep the loop alive
                 logger.error(f"Poll error: {exc!r}")

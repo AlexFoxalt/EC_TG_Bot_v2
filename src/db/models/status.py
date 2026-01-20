@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Boolean
+from sqlalchemy import Column, Boolean, String
 from sqlalchemy import DateTime
 from sqlalchemy import Integer
 from sqlalchemy import func
@@ -13,5 +13,6 @@ class Status(Base):
     id = Column(Integer, primary_key=True)
 
     value = Column(Boolean)
+    label = Column(String, index=True)
 
     date_created = Column(DateTime(timezone=True), server_default=func.now())

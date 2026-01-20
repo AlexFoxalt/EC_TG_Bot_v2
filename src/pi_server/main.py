@@ -15,7 +15,6 @@ from src.utils import get_database_url
 
 HEARTBEAT_PATH = os.getenv("HEARTBEAT_PATH", "/heartbeat").strip()
 HEARTBEAT_TOKEN = os.getenv("HEARTBEAT_TOKEN", "").strip()
-HEARTBEAT_ID = 1
 
 engine = create_async_engine(get_database_url(), pool_pre_ping=True)
 session_factory = async_sessionmaker(engine, expire_on_commit=False)
@@ -47,13 +46,12 @@ async def _get_sql_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def _get_or_create_heartbeat(
-    session: AsyncSession,
-) -> Heartbeat:
-    result = await session.execute(select(Heartbeat).where(Heartbeat.id == HEARTBEAT_ID))
+async def _get_or_create_heartbeat(session: AsyncSession, label: str) -> Heartbeat:
+    result = await session.execute(select(Heartbeat).where(Heartbeat.label == label))
     heartbeat = result.scalar_one_or_none()
     if heartbeat is None:
-        heartbeat = Heartbeat(id=HEARTBEAT_ID)
+        logger.info(f"Heartbeat with label: {label} not found. Creating new...")
+        heartbeat = Heartbeat(label=label)
         session.add(heartbeat)
     return heartbeat
 
@@ -65,11 +63,7 @@ HEARTBEAT_PATH = _normalize_path(HEARTBEAT_PATH)
 @app.on_event("startup")
 async def _on_startup() -> None:
     logger.info(
-        "Heartbeat listener starting",
-        extra={
-            "path": HEARTBEAT_PATH,
-            "auth_required": bool(HEARTBEAT_TOKEN),
-        },
+        f"Heartbeat listener starting. Path: {HEARTBEAT_PATH}, Auth: {bool(HEARTBEAT_TOKEN)}",
     )
 
 
@@ -81,13 +75,14 @@ async def _on_shutdown() -> None:
 @app.get(HEARTBEAT_PATH)
 async def listen_heartbeat(
     timestamp: int,
+    label: str,
     token: Annotated[str, Depends(auth_provider)],
     sql_session: AsyncSession = Depends(_get_sql_session),
 ) -> JSONResponse:
     if HEARTBEAT_TOKEN:
         _validate_token(token.credentials)
 
-    heartbeat_row = await _get_or_create_heartbeat(sql_session)
+    heartbeat_row = await _get_or_create_heartbeat(sql_session, label)
     ts_value = datetime.fromtimestamp(timestamp, tz=timezone.utc)
     heartbeat_row.timestamp = ts_value
     await sql_session.commit()

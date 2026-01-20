@@ -24,6 +24,7 @@ async def _astart_pi_client() -> None:
     heartbeat_path = os.getenv("HEARTBEAT_PATH", "/heartbeat")
     heartbeat_timeout = float(os.getenv("HEARTBEAT_TIMEOUT", "5"))
     heartbeat_token = os.getenv("HEARTBEAT_TOKEN", "")
+    heartbeat_label = os.getenv("HEARTBEAT_LABEL", "UNKNOWN")
 
     logger.info("Starting heartbeat...")
     url = _build_heartbeat_url(droplet_ip, droplet_port, heartbeat_path)
@@ -34,24 +35,16 @@ async def _astart_pi_client() -> None:
     if not headers:
         headers = None
     logger.info(
-        "Heartbeat configured",
-        extra={
-            "url": url,
-            "interval_sec": heartbeat_interval,
-            "timeout_sec": heartbeat_timeout,
-        },
+        f"Heartbeat configured. url: {url}, label: {heartbeat_label}, interval_sec: {heartbeat_interval}, timeout_sec: {heartbeat_timeout}",
     )
     async with httpx.AsyncClient(timeout=timeout) as client:
         while True:
             try:
-                params = {"timestamp": int(datetime.now(UTC).timestamp())}
+                params = {"timestamp": int(datetime.now(UTC).timestamp()), "label": heartbeat_label}
                 response = await client.get(url, params=params, headers=headers)
                 response.raise_for_status()
                 logger.info(
                     f"Heartbeat sent. Status code: {response.status_code}",
-                    extra={
-                        "status_code": response.status_code,
-                    },
                 )
             except httpx.RequestError as exc:
                 logger.warning(f"Heartbeat request failed. Err: {exc} | URL: {url}")

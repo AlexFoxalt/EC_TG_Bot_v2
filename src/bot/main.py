@@ -27,6 +27,7 @@ from tenacity import (
 from aiolimiter import AsyncLimiter
 
 from src.db.models import User, Status
+from src.enums import Label
 from src.logger.main import logger
 from src.utils import _require_env, get_database_url
 
@@ -480,7 +481,10 @@ async def handle_power_status(update: Update, _: ContextTypes.DEFAULT_TYPE) -> N
 
     async with session_factory() as session:
         # Get latest status ordered by date_created DESC
-        result = await session.execute(select(Status).order_by(desc(Status.date_created)).limit(1))
+        power_label = str(Label.power)
+        result = await session.execute(
+            select(Status).where(Status.label == power_label).order_by(desc(Status.date_created)).limit(1)
+        )
         latest_status = result.scalar_one_or_none()
 
         if latest_status is None:
@@ -685,11 +689,16 @@ async def check_and_send_notifications() -> None:
     try:
         async with session_factory() as session:
             # Get the two most recent statuses to determine the change
-            result = await session.execute(select(Status).order_by(desc(Status.date_created)).limit(2))
+            power_label = str(Label.power)
+            result = await session.execute(
+                select(Status).where(Status.label == power_label).order_by(desc(Status.date_created)).limit(2)
+            )
             statuses = result.scalars().all()
 
             if not statuses:
-                logger.bind(username="system").debug("No status records found - skipping notification check")
+                logger.bind(username="system").debug(
+                    f"No status records with label: {power_label} found - skipping notification check"
+                )
                 return
 
             latest_status = statuses[0]

@@ -1,3 +1,5 @@
+MSG ?= auto
+
 format:
 	ruff format .
 
@@ -27,6 +29,15 @@ init_db:
 
 refresh_db:
 	python3 entrypoints/refresh_db.py
+
+migrations:
+	alembic revision --autogenerate -m "$(MSG)"
+
+migrate:
+	alembic upgrade head
+
+downgrade:
+	alembic downgrade -1
 
 logs_compact:
 	docker compose logs -f bot scheduler pi_server
