@@ -522,7 +522,10 @@ async def handle_gen_status(update: Update, _: ContextTypes.DEFAULT_TYPE) -> Non
 
     async with session_factory() as session:
         # Get latest status ordered by date_created DESC
-        result = await session.execute(select(Status).order_by(desc(Status.date_created)).limit(1))
+        power_label = str(Label.power)
+        result = await session.execute(
+            select(Status).where(Status.label == power_label).order_by(desc(Status.date_created)).limit(1)
+        )
         latest_status = result.scalar_one_or_none()
 
         if latest_status and latest_status.value:
