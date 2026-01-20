@@ -12,7 +12,7 @@ from src.logger.main import logger
 from src.utils import _require_env
 
 
-MAINTENANCE_MESSAGE = "⚠️ БОТ НЕДОСТУПЕН ⚠️\n\nУстанавливается техническое обновление.\n\nВозвращайтесь позже."
+MAINTENANCE_MESSAGE = "⚠️ БОТ НЕДОСТУПЕН ⚠️\n\nУстанавливается техническое обновление ♻️\n\nВозвращайтесь позже."
 
 
 async def handle_maintenance_message(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
