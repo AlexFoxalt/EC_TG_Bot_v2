@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
@@ -36,8 +36,8 @@ if TYPE_CHECKING:
 
 # Constants
 KYIV_TZ = ZoneInfo("Europe/Kyiv")
-NIGHT_START_HOUR = 20  # 20:00 Ukraine time
-NIGHT_END_HOUR = 6  # 06:00 Ukraine time
+NIGHT_START_HOUR = 22
+NIGHT_END_HOUR = 8
 SECS_IN_MINUTE = 60
 MINS_IN_HOUR = 60
 GEN_WORKTIME_SCHEDULE = [
@@ -131,13 +131,6 @@ def get_username_from_update(update: Update) -> str:
     return user.username or user.first_name or f"user_{user.id}" or "unknown"
 
 
-def get_username_from_user_id(user_id: int | None) -> str:
-    """Get username from user_id for logging."""
-    if user_id is None:
-        return "unknown"
-    return f"user_{user_id}"
-
-
 def get_username_from_query(query) -> str:
     """Extract username from callback query for logging."""
     if query is None or query.from_user is None:
@@ -178,9 +171,9 @@ def get_night_sound_choice_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(keyboard)
 
 
-def is_night_time() -> bool:
-    """Check if current time is night time (20:00 - 06:00 UTC, which is 22:00 - 08:00 Kyiv time)."""
-    now = datetime.now(timezone.utc)
+def is_nighttime() -> bool:
+    """Check if current time is nighttime (22:00 - 08:00 Kyiv time)."""
+    now = datetime.now(KYIV_TZ)
     hour = now.hour
     return hour >= NIGHT_START_HOUR or hour < NIGHT_END_HOUR
 
@@ -500,7 +493,7 @@ async def handle_power_status(update: Update, _: ContextTypes.DEFAULT_TYPE) -> N
 
         # Determine status message
         is_on = latest_status.value
-        status_text = "🟢 *Электричество ЕСТЬ*\\! 🟢" if is_on else "🔴 *Электричества НЕТ* 🔴"
+        status_text = "🟢 *Электричество ЕСТЬ\\!* 🟢" if is_on else "🔴 *Электричества НЕТ* 🔴"
         datetime_text = "📅 Время включения: " if is_on else "📅 Время отключения: "
         date_created_timezone = latest_status.date_created.astimezone(KYIV_TZ)
         logger.bind(username="system").info(
@@ -725,7 +718,7 @@ async def check_and_send_notifications() -> None:
                 return
 
             # Determine if it's night time
-            is_night = is_night_time()
+            is_night = is_nighttime()
             logger.bind(username="system").info(
                 f"Status change detected: {previous_status.value} → {latest_status.value}, "
                 f"is_night={is_night}, notifying {len(users)} users"
