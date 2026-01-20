@@ -51,5 +51,8 @@ logs_all:
 logs-last-100:
 	docker compose logs --tail=100
 
-systemd_logs:
+systemctl_logs:
 	journalctl -n 50 -u pi-client
+
+systemctl_restart:
+	systemctl restart pi-client

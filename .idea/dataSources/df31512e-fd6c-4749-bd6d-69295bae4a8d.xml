@@ -3,9 +3,17 @@
   <database-model serializer="dbm" dbms="POSTGRES" family-id="POSTGRES" format-version="4.54">
     <root id="1">
       <DateStyle>mdy</DateStyle>
-      <IntrospectionStateNumber>13049</IntrospectionStateNumber>
+      <Grants>1||-9223372036854775808|c|G
+1||10|c|G
+1||10|C|G
+1||10|T|G
+4||-9223372036854775808|c|G
+4||10|c|G
+4||10|C|G
+4||10|T|G</Grants>
+      <IntrospectionStateNumber>13091</IntrospectionStateNumber>
       <ServerVersion>18.1</ServerVersion>
-      <StartupTime>1768754179</StartupTime>
+      <StartupTime>1768912669</StartupTime>
       <TimeZones>true ACDT
 true ACSST
 false ACST
@@ -700,7 +708,7 @@ false posixrules
 13293||10|C|G
 13293||-9223372036854775808|U|G
 13293||10|U|G</Grants>
-      <IntrospectionStateNumber>13049</IntrospectionStateNumber>
+      <IntrospectionStateNumber>13091</IntrospectionStateNumber>
       <ObjectId>5</ObjectId>
       <OwnerName>user</OwnerName>
     </database>
@@ -4216,11 +4224,11 @@ false posixrules
       <AutoIntrospectionLevel>3</AutoIntrospectionLevel>
       <Comment>standard public schema</Comment>
       <Current>1</Current>
-      <LastIntrospectionL1Xid>13049</LastIntrospectionL1Xid>
-      <LastIntrospectionL2Xid>13049</LastIntrospectionL2Xid>
-      <LastIntrospectionL3Xid>13049</LastIntrospectionL3Xid>
+      <LastIntrospectionL1Xid>13091</LastIntrospectionL1Xid>
+      <LastIntrospectionL2Xid>13091</LastIntrospectionL2Xid>
+      <LastIntrospectionL3Xid>13091</LastIntrospectionL3Xid>
       <LastIntrospectionLevel>3</LastIntrospectionLevel>
-      <LastIntrospectionLocalTimestamp>2026-01-20.09:50:36</LastIntrospectionLocalTimestamp>
+      <LastIntrospectionLocalTimestamp>2026-01-20.12:41:34</LastIntrospectionLocalTimestamp>
       <ObjectId>2200</ObjectId>
       <StateNumber>546</StateNumber>
       <OwnerName>pg_database_owner</OwnerName>
@@ -4252,28 +4260,59 @@ false posixrules
       <StoredType>bigint|0s</StoredType>
       <OwnerName>user</OwnerName>
     </sequence>
-    <table id="275" parent="271" name="heartbeat">
+    <table id="275" parent="271" name="alembic_version">
+      <DetailsLevel>2</DetailsLevel>
+      <ObjectId>16437</ObjectId>
+      <StateNumber>13090</StateNumber>
+      <AccessMethodId>2</AccessMethodId>
+      <OwnerName>user</OwnerName>
+    </table>
+    <table id="276" parent="271" name="heartbeat">
       <DetailsLevel>2</DetailsLevel>
       <ObjectId>16429</ObjectId>
-      <StateNumber>768</StateNumber>
+      <StateNumber>13090</StateNumber>
       <AccessMethodId>2</AccessMethodId>
       <OwnerName>user</OwnerName>
     </table>
-    <table id="276" parent="271" name="statuses">
+    <table id="277" parent="271" name="statuses">
       <DetailsLevel>2</DetailsLevel>
       <ObjectId>16409</ObjectId>
-      <StateNumber>768</StateNumber>
+      <StateNumber>13090</StateNumber>
       <AccessMethodId>2</AccessMethodId>
       <OwnerName>user</OwnerName>
     </table>
-    <table id="277" parent="271" name="users">
+    <table id="278" parent="271" name="users">
       <DetailsLevel>2</DetailsLevel>
       <ObjectId>16418</ObjectId>
       <StateNumber>768</StateNumber>
       <AccessMethodId>2</AccessMethodId>
       <OwnerName>user</OwnerName>
     </table>
-    <column id="278" parent="275" name="id">
+    <column id="279" parent="275" name="version_num">
+      <NotNull>1</NotNull>
+      <Position>1</Position>
+      <StateNumber>13090</StateNumber>
+      <StoredType>varchar(32)|0s</StoredType>
+      <TypeId>1043</TypeId>
+    </column>
+    <index id="280" parent="275" name="alembic_version_pkc">
+      <ColNames>version_num</ColNames>
+      <ObjectId>16441</ObjectId>
+      <Primary>1</Primary>
+      <StateNumber>13090</StateNumber>
+      <Unique>1</Unique>
+      <AccessMethodId>403</AccessMethodId>
+      <CollationNames>default</CollationNames>
+      <CollationIds>100</CollationIds>
+      <CollationParentNames>pg_catalog</CollationParentNames>
+    </index>
+    <key id="281" parent="275" name="alembic_version_pkc">
+      <ObjectId>16442</ObjectId>
+      <Primary>1</Primary>
+      <StateNumber>13090</StateNumber>
+      <UnderlyingIndexId>16441</UnderlyingIndexId>
+    </key>
+    <column id="282" parent="276" name="id">
       <DefaultExpression>nextval(&apos;heartbeat_id_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4282,26 +4321,32 @@ false posixrules
       <SequenceId>16428</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="279" parent="275" name="timestamp">
+    <column id="283" parent="276" name="timestamp">
       <Position>2</Position>
       <StateNumber>768</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
     </column>
-    <column id="280" parent="275" name="date_created">
+    <column id="284" parent="276" name="date_created">
       <DefaultExpression>now()</DefaultExpression>
       <Position>3</Position>
       <StateNumber>768</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
     </column>
-    <column id="281" parent="275" name="date_updated">
+    <column id="285" parent="276" name="date_updated">
       <Position>4</Position>
       <StateNumber>768</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
     </column>
-    <index id="282" parent="275" name="heartbeat_pkey">
+    <column id="286" parent="276" name="label">
+      <Position>5</Position>
+      <StateNumber>13090</StateNumber>
+      <StoredType>varchar|0s</StoredType>
+      <TypeId>1043</TypeId>
+    </column>
+    <index id="287" parent="276" name="heartbeat_pkey">
       <ColNames>id</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16435</ObjectId>
@@ -4310,14 +4355,23 @@ false posixrules
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="283" parent="275" name="heartbeat_pkey">
+    <index id="288" parent="276" name="ix_heartbeat_label">
+      <ColNames>label</ColNames>
+      <ObjectId>16445</ObjectId>
+      <StateNumber>13090</StateNumber>
+      <AccessMethodId>403</AccessMethodId>
+      <CollationNames>default</CollationNames>
+      <CollationIds>100</CollationIds>
+      <CollationParentNames>pg_catalog</CollationParentNames>
+    </index>
+    <key id="289" parent="276" name="heartbeat_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16436</ObjectId>
       <Primary>1</Primary>
       <StateNumber>768</StateNumber>
       <UnderlyingIndexId>16435</UnderlyingIndexId>
     </key>
-    <column id="284" parent="276" name="id">
+    <column id="290" parent="277" name="id">
       <DefaultExpression>nextval(&apos;statuses_id_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4326,20 +4380,26 @@ false posixrules
       <SequenceId>16408</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="285" parent="276" name="value">
+    <column id="291" parent="277" name="value">
       <Position>2</Position>
       <StateNumber>768</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="286" parent="276" name="date_created">
+    <column id="292" parent="277" name="date_created">
       <DefaultExpression>now()</DefaultExpression>
       <Position>3</Position>
       <StateNumber>768</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
     </column>
-    <index id="287" parent="276" name="statuses_pkey">
+    <column id="293" parent="277" name="label">
+      <Position>4</Position>
+      <StateNumber>13090</StateNumber>
+      <StoredType>varchar|0s</StoredType>
+      <TypeId>1043</TypeId>
+    </column>
+    <index id="294" parent="277" name="statuses_pkey">
       <ColNames>id</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16415</ObjectId>
@@ -4348,14 +4408,23 @@ false posixrules
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="288" parent="276" name="statuses_pkey">
+    <index id="295" parent="277" name="ix_statuses_label">
+      <ColNames>label</ColNames>
+      <ObjectId>16448</ObjectId>
+      <StateNumber>13090</StateNumber>
+      <AccessMethodId>403</AccessMethodId>
+      <CollationNames>default</CollationNames>
+      <CollationIds>100</CollationIds>
+      <CollationParentNames>pg_catalog</CollationParentNames>
+    </index>
+    <key id="296" parent="277" name="statuses_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16416</ObjectId>
       <Primary>1</Primary>
       <StateNumber>768</StateNumber>
       <UnderlyingIndexId>16415</UnderlyingIndexId>
     </key>
-    <column id="289" parent="277" name="id">
+    <column id="297" parent="278" name="id">
       <DefaultExpression>nextval(&apos;users_id_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4364,62 +4433,62 @@ false posixrules
       <SequenceId>16417</SequenceId>
       <TypeId>20</TypeId>
     </column>
-    <column id="290" parent="277" name="username">
+    <column id="298" parent="278" name="username">
       <Position>2</Position>
       <StateNumber>768</StateNumber>
       <StoredType>varchar|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="291" parent="277" name="first_name">
+    <column id="299" parent="278" name="first_name">
       <Position>3</Position>
       <StateNumber>768</StateNumber>
       <StoredType>varchar|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="292" parent="277" name="is_bot">
+    <column id="300" parent="278" name="is_bot">
       <Position>4</Position>
       <StateNumber>768</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="293" parent="277" name="language_code">
+    <column id="301" parent="278" name="language_code">
       <Position>5</Position>
       <StateNumber>768</StateNumber>
       <StoredType>varchar|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="294" parent="277" name="id_admin">
+    <column id="302" parent="278" name="id_admin">
       <Position>6</Position>
       <StateNumber>768</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="295" parent="277" name="notifs_enabled">
+    <column id="303" parent="278" name="notifs_enabled">
       <Position>7</Position>
       <StateNumber>768</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="296" parent="277" name="night_notif_sound_enabled">
+    <column id="304" parent="278" name="night_notif_sound_enabled">
       <Position>8</Position>
       <StateNumber>768</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="297" parent="277" name="date_created">
+    <column id="305" parent="278" name="date_created">
       <DefaultExpression>now()</DefaultExpression>
       <Position>9</Position>
       <StateNumber>768</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
     </column>
-    <column id="298" parent="277" name="date_updated">
+    <column id="306" parent="278" name="date_updated">
       <Position>10</Position>
       <StateNumber>768</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
     </column>
-    <index id="299" parent="277" name="users_pkey">
+    <index id="307" parent="278" name="users_pkey">
       <ColNames>id</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16426</ObjectId>
@@ -4428,7 +4497,7 @@ false posixrules
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="300" parent="277" name="users_pkey">
+    <key id="308" parent="278" name="users_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16427</ObjectId>
       <Primary>1</Primary>
