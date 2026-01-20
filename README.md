@@ -1,3 +1,7 @@
+# Power Status App
+
+![system_design.png](docs/system_design.png)
+
 ## Docker Compose (Full Stack)
 
 ### Quick start
