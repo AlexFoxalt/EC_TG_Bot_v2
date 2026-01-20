@@ -18,6 +18,9 @@ run_scheduler:
 run_bot:
 	python3 entrypoints/bot.py
 
+run_maintenance:
+	python3 entrypoints/maintenance.py
+
 run_pi_client:
 	python3 entrypoints/start_pi_client.py
 
