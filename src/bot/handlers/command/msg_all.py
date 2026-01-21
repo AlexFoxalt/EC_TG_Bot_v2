@@ -75,7 +75,8 @@ async def msg_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 disable_sound=False,
             )
         )
-        for recipient in all_users if recipient.id != user.id
+        for recipient in all_users
+        if recipient.id != user.id
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for result in results:
