@@ -11,9 +11,9 @@
 4||10|c|G
 4||10|C|G
 4||10|T|G</Grants>
-      <IntrospectionStateNumber>13091</IntrospectionStateNumber>
+      <IntrospectionStateNumber>25637</IntrospectionStateNumber>
       <ServerVersion>18.1</ServerVersion>
-      <StartupTime>1768912669</StartupTime>
+      <StartupTime>1769033781</StartupTime>
       <TimeZones>true ACDT
 true ACSST
 false ACST
@@ -708,7 +708,7 @@ false posixrules
 13293||10|C|G
 13293||-9223372036854775808|U|G
 13293||10|U|G</Grants>
-      <IntrospectionStateNumber>13091</IntrospectionStateNumber>
+      <IntrospectionStateNumber>25637</IntrospectionStateNumber>
       <ObjectId>5</ObjectId>
       <OwnerName>user</OwnerName>
     </database>
@@ -4224,11 +4224,11 @@ false posixrules
       <AutoIntrospectionLevel>3</AutoIntrospectionLevel>
       <Comment>standard public schema</Comment>
       <Current>1</Current>
-      <LastIntrospectionL1Xid>13091</LastIntrospectionL1Xid>
-      <LastIntrospectionL2Xid>13091</LastIntrospectionL2Xid>
-      <LastIntrospectionL3Xid>13091</LastIntrospectionL3Xid>
+      <LastIntrospectionL1Xid>25637</LastIntrospectionL1Xid>
+      <LastIntrospectionL2Xid>25637</LastIntrospectionL2Xid>
+      <LastIntrospectionL3Xid>25637</LastIntrospectionL3Xid>
       <LastIntrospectionLevel>3</LastIntrospectionLevel>
-      <LastIntrospectionLocalTimestamp>2026-01-20.12:41:34</LastIntrospectionLocalTimestamp>
+      <LastIntrospectionLocalTimestamp>2026-01-21.22:16:57</LastIntrospectionLocalTimestamp>
       <ObjectId>2200</ObjectId>
       <StateNumber>546</StateNumber>
       <OwnerName>pg_database_owner</OwnerName>
@@ -4284,7 +4284,7 @@ false posixrules
     <table id="278" parent="271" name="users">
       <DetailsLevel>2</DetailsLevel>
       <ObjectId>16418</ObjectId>
-      <StateNumber>768</StateNumber>
+      <StateNumber>25636</StateNumber>
       <AccessMethodId>2</AccessMethodId>
       <OwnerName>user</OwnerName>
     </table>
@@ -4457,36 +4457,36 @@ false posixrules
       <StoredType>varchar|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="302" parent="278" name="id_admin">
-      <Position>6</Position>
-      <StateNumber>768</StateNumber>
-      <StoredType>boolean|0s</StoredType>
-      <TypeId>16</TypeId>
-    </column>
-    <column id="303" parent="278" name="notifs_enabled">
+    <column id="302" parent="278" name="notifs_enabled">
       <Position>7</Position>
       <StateNumber>768</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="304" parent="278" name="night_notif_sound_enabled">
+    <column id="303" parent="278" name="night_notif_sound_enabled">
       <Position>8</Position>
       <StateNumber>768</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="305" parent="278" name="date_created">
+    <column id="304" parent="278" name="date_created">
       <DefaultExpression>now()</DefaultExpression>
       <Position>9</Position>
       <StateNumber>768</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
     </column>
-    <column id="306" parent="278" name="date_updated">
+    <column id="305" parent="278" name="date_updated">
       <Position>10</Position>
       <StateNumber>768</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
+    </column>
+    <column id="306" parent="278" name="is_admin">
+      <Position>11</Position>
+      <StateNumber>25636</StateNumber>
+      <StoredType>boolean|0s</StoredType>
+      <TypeId>16</TypeId>
     </column>
     <index id="307" parent="278" name="users_pkey">
       <ColNames>id</ColNames>

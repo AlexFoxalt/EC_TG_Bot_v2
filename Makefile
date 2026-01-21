@@ -56,3 +56,6 @@ systemctl_logs:
 
 systemctl_restart:
 	systemctl restart pi-client
+
+pi_temp:
+	vcgencmd measure_temp
