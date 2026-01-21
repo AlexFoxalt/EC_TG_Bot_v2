@@ -64,7 +64,14 @@ async def _send_status_notification(
     final_text = changes_text + time_diff_text + langpack.NOTIF_FOOTER
 
     try:
-        await send_message_with_retry(rate_limiter, semaphore, user_id, final_text, disable_sound)
+        await send_message_with_retry(
+            bot_app=bot_app,
+            rate_limiter=rate_limiter,
+            semaphore=semaphore,
+            user_id=user_id,
+            message_text=final_text,
+            disable_sound=disable_sound,
+        )
         logger.bind(username="system").info(
             f"Sent status notification to user_id={user_id}, sound_disabled={disable_sound}"
         )
