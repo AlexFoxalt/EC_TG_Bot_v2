@@ -23,12 +23,10 @@ class ENLangPack(BaseLangPack):
     MSG_GEN_NOT_REQUIRED = "⚡️ There is power in the house ⚡️\n\nGenerator is not required"
     MSG_GEN_ON = "🔋 *Generator is RUNNING* 🔋"
     MSG_GEN_OFF = "🪫 *Generator is NOT RUNNING* 🪫"
-    MSG_GEN_TIME_TILL_OFF = "⏳ Until shutdown:"
-    MSG_GEN_TIME_TILL_ON = "⏳ Until startup:"
-    MSG_GEN_FOOTER = (
-        "_Please note that the generator operation is determined by checking against the schedule, "
-        "not by actual verification\\. Therefore, the real situation may differ\\!_"
-    )
+    MSG_GEN_TIME_TILL_OFF = "⏳ According to schedule, until shutdown:"
+    MSG_GEN_TIME_TILL_ON = "⏳ According to schedule, until startup:"
+    MSG_GEN_SHOULD_BE_OFF = "⚠️ _The generator is running, but according to the schedule, it should be turned *OFF*\\!_"
+    MSG_GEN_SHOULD_BE_ON = "⚠️ _The generator is turned off, but according to the schedule, it should be turned *ON*\\!_"
     MSG_POWER_STATUS_NOT_AVAILABLE = "⚠️ Information is currently unavailable. Please try again later."
     MSG_POWER_IS_ON = "🟢 *Power is ON\\!* 🟢"
     MSG_POWER_IS_OFF = "🔴 *Power is OFF* 🔴"

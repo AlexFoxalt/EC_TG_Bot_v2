@@ -117,7 +117,7 @@ def get_username_from_query(query) -> str:
     return user.username or user.first_name or f"user_{user.id}" or "unknown"
 
 
-def is_generator_on(hour: int, minute: int = 0) -> tuple[bool, timedelta]:
+def check_generator_schedule(hour: int, minute: int = 0) -> tuple[bool, timedelta]:
     current_minutes = hour * 60 + minute
 
     for start_time, end_time, is_on in GEN_WORKTIME_SCHEDULE:
