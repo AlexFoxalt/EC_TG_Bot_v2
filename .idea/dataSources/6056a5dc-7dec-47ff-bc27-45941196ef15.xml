@@ -4276,7 +4276,7 @@ false posixrules
     <table id="278" parent="271" name="users">
       <DetailsLevel>2</DetailsLevel>
       <ObjectId>17021</ObjectId>
-      <StateNumber>1247</StateNumber>
+      <StateNumber>1626</StateNumber>
       <AccessMethodId>2</AccessMethodId>
       <OwnerName>user</OwnerName>
     </table>
@@ -4440,36 +4440,36 @@ false posixrules
       <StoredType>varchar|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="301" parent="278" name="id_admin">
-      <Position>6</Position>
-      <StateNumber>1247</StateNumber>
-      <StoredType>boolean|0s</StoredType>
-      <TypeId>16</TypeId>
-    </column>
-    <column id="302" parent="278" name="notifs_enabled">
+    <column id="301" parent="278" name="notifs_enabled">
       <Position>7</Position>
       <StateNumber>1247</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="303" parent="278" name="night_notif_sound_enabled">
+    <column id="302" parent="278" name="night_notif_sound_enabled">
       <Position>8</Position>
       <StateNumber>1247</StateNumber>
       <StoredType>boolean|0s</StoredType>
       <TypeId>16</TypeId>
     </column>
-    <column id="304" parent="278" name="date_created">
+    <column id="303" parent="278" name="date_created">
       <DefaultExpression>now()</DefaultExpression>
       <Position>9</Position>
       <StateNumber>1247</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
     </column>
-    <column id="305" parent="278" name="date_updated">
+    <column id="304" parent="278" name="date_updated">
       <Position>10</Position>
       <StateNumber>1247</StateNumber>
       <StoredType>timestamp with time zone|0s</StoredType>
       <TypeId>1184</TypeId>
+    </column>
+    <column id="305" parent="278" name="is_admin">
+      <Position>11</Position>
+      <StateNumber>1626</StateNumber>
+      <StoredType>boolean|0s</StoredType>
+      <TypeId>16</TypeId>
     </column>
     <index id="306" parent="278" name="users_pkey">
       <ColNames>id</ColNames>

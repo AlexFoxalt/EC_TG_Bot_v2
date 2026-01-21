@@ -15,7 +15,7 @@ class User(Base):
     first_name = Column(String, nullable=True)
     is_bot = Column(Boolean, default=False)
     language_code = Column(String, nullable=True)
-    id_admin = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False)
     notifs_enabled = Column(Boolean, default=True)
     night_notif_sound_enabled = Column(Boolean, default=True)
 

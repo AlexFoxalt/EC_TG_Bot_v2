@@ -15,6 +15,7 @@ from telegram.ext import (
 
 from src.bot.handlers.callback_query.night_sound import handle_night_sound_choice
 from src.bot.handlers.callback_query.notifications import handle_notification_choice
+from src.bot.handlers.command.msg_all import msg_all
 from src.bot.handlers.command.start import start
 from src.bot.handlers.message.gen_status import handle_gen_status
 from src.bot.handlers.message.power_status import handle_power_status
@@ -73,6 +74,7 @@ def start_bot() -> None:
 
     # Add handlers
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("msgAll", msg_all))
     app.add_handler(CallbackQueryHandler(handle_notification_choice, pattern="^notif_(yes|no)$"))
     app.add_handler(CallbackQueryHandler(handle_night_sound_choice, pattern="^night_sound_(yes|no)$"))
 

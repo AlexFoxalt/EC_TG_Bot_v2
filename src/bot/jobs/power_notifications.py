@@ -107,30 +107,28 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
     """Check for new status changes and send notifications to enabled users."""
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.bind(username="system").warning("Session factory not initialized - skipping notification check")
+        logger.bind(username="system").error("Session factory not initialized - skipping notification check")
         return
 
     bot_app = context.application.bot_data["app"]
     if bot_app is None:
-        logger.bind(username="system").warning("Bot application not initialized - skipping notification check")
+        logger.bind(username="system").error("Bot application not initialized - skipping notification check")
         return
 
     rate_limiter = context.application.bot_data["rate_limiter"]
     if rate_limiter is None:
-        logger.bind(username="system").warning("Rate limiter not initialized - skipping notification check")
+        logger.bind(username="system").error("Rate limiter not initialized - skipping notification check")
         return
 
     semaphore = context.application.bot_data["semaphore"]
     if semaphore is None:
-        logger.bind(username="system").warning("Semaphore not initialized - skipping notification check")
+        logger.bind(username="system").error("Semaphore not initialized - skipping notification check")
         return
 
     languages = context.application.bot_data["languages"]
     if languages is None:
-        logger.bind(username="system").warning("Languages not initialized - skipping notification check")
+        logger.bind(username="system").error("Languages not initialized - skipping notification check")
         return
-
-    last_notified_status_id = context.application.bot_data["last_notified_status_id"]
 
     try:
         async with session_factory() as session:
@@ -151,16 +149,19 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
             previous_status = statuses[1] if len(statuses) > 1 else None
 
             # Set init value on app start
-            if last_notified_status_id is None:
-                last_notified_status_id = latest_status.id
+            if context.application.bot_data["last_notified_status_id"] is None:
+                context.application.bot_data["last_notified_status_id"] = latest_status.id
 
             # Check if we've already notified about this status
-            if last_notified_status_id is not None and latest_status.id == last_notified_status_id:
+            if (
+                context.application.bot_data["last_notified_status_id"] is not None
+                and latest_status.id == context.application.bot_data["last_notified_status_id"]
+            ):
                 return
 
             # If this is the first status or status hasn't changed, don't notify
             if previous_status is None or latest_status.value == previous_status.value:
-                last_notified_status_id = latest_status.id
+                context.application.bot_data["last_notified_status_id"] = latest_status.id
                 return
 
             # Status has changed - get all users with notifications enabled
@@ -169,7 +170,7 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
 
             if not users:
                 logger.bind(username="system").info("No users with notifications enabled - skipping notification send")
-                last_notified_status_id = latest_status.id
+                context.application.bot_data["last_notified_status_id"] = latest_status.id
                 return
 
             # Determine if it's night time
@@ -208,9 +209,9 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
                     )
 
             # Update last notified status ID
-            last_notified_status_id = latest_status.id
+            context.application.bot_data["last_notified_status_id"] = latest_status.id
             logger.bind(username="system").info(
-                f"Notifications sent for status change, last_notified_status_id={last_notified_status_id}"
+                f"Notifications sent for status change, last_notified_status_id={context.application.bot_data['last_notified_status_id']}"
             )
 
     except Exception as e:

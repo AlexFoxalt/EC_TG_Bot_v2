@@ -50,7 +50,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             first_name=user.first_name,
             is_bot=user.is_bot,
             language_code=user.language_code,
-            id_admin=False,
+            is_admin=False,
             notifs_enabled=True,  # Default, will be updated by user choice
             night_notif_sound_enabled=True,  # Default, will be updated by user choice
         )

@@ -83,7 +83,7 @@ async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         message = (
             f"{langpack.MSG_GEN_ON}\n\n"
             f"{langpack.MSG_GEN_SHOULD_BE_OFF}\n\n"
-            f"{langpack.MSG_GEN_TIME_TILL_OFF} {next_switch_sub_text}"
+            f"{langpack.MSG_GEN_TIME_TILL_ON} {next_switch_sub_text}"
         )
     elif not latest_gen_status.value and sched_status:
         # Generator is actually OFF but according to schedule it should be ON
