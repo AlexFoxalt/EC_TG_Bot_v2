@@ -10,7 +10,7 @@ __all__ = ["get_logger", "logger"]
 
 DEFAULT_LOGGER_NAME = "tg-bot"
 DEFAULT_MESSAGE_FORMAT = (
-    "<m>{time:YYYY-MM-DD HH:mm:ss.SSS}</m> | <level>{level: <8}</level> | {extra[username]:<25} | {message}"
+    "<m>{time:YYYY-MM-DD HH:mm:ss.SSS}</m> | <level>{level: <4}</level> | {extra[username]:<25} | {message}"
 )
 
 
@@ -47,6 +47,7 @@ def _setup_logger(name: str, level: Optional[str]) -> Logger:
     ctx.level("INFO", color="<green>")
     ctx.level("WARNING", color="<yellow>")
     ctx.level("ERROR", color="<red>")
+    ctx.level("DEBUG", color="<white>")
 
     if level:
         # `logger.level()` defines; `logger.remove/add` controls filtering.
