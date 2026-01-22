@@ -63,7 +63,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"first_name={new_user.first_name}, "
             f"is_bot={new_user.is_bot}, "
             f"language_code={new_user.language_code}, "
-            f"is_admin={new_user.id_admin}"
+            f"is_admin={new_user.is_admin}"
         )
 
         # Ask about notifications
