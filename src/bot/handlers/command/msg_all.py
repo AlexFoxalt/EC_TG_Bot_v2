@@ -73,6 +73,7 @@ async def msg_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 user_id=recipient.id,
                 message_text=message,
                 disable_sound=False,
+                markdown=False,
             )
         )
         for recipient in all_users

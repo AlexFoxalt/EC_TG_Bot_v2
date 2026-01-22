@@ -78,18 +78,23 @@ async def send_message_with_retry(
     user_id: int,
     message_text: str,
     disable_sound: bool,
+    markdown: bool = True,
 ) -> None:
     """Internal function to send message with retry logic.
 
     Retries up to 3 times on transient errors (network, timeouts, rate limits).
     Uses exponential backoff: 1s, 2s, 4s (max 5s).
     """
+    if markdown:
+        parse_mode = ParseMode.MARKDOWN_V2
+    else:
+        parse_mode = None
     async with semaphore:
         async with rate_limiter:
             await bot_app.bot.send_message(
                 chat_id=user_id,
                 text=message_text,
-                parse_mode=ParseMode.MARKDOWN_V2,
+                parse_mode=parse_mode,
                 disable_notification=disable_sound,
             )
 
