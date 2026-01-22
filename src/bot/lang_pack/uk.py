@@ -46,10 +46,10 @@ class UKLangPack(BaseLangPack):
     NOTIF_FOOTER = "_Ви отримали це повідомлення, тому що увімкнули сповіщення в налаштуваннях бота\\. Їх можна в будь\\-який момент вимкнути\\._"
 
     WORD_MINUTES = "хв"
-    WORD_HOURS = "год"
+    WORD_HOURS = "г"
     WORD_AND = "і"
     WORD_USER = "Користувач"
-    WORD_ELECTRICITY = "Електрика"
+    WORD_ELECTRICITY = "Світло"
     WORD_ENABLED_LOWER = "увімкнено"
     WORD_DISABLED_LOWER = "вимкнено"
 

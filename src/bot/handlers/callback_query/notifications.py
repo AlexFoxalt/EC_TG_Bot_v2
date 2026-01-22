@@ -7,7 +7,7 @@ from telegram.ext import (
 from src.bot.keyboards import get_night_sound_choice_keyboard, get_main_keyboard
 from src.bot.lang_pack.base import BaseLangPack
 from src.bot.utils import (
-    get_username_from_query,
+    get_user_identity_from_query,
     get_user_from_db,
     get_completion_message,
     cleanup_registration_context,
@@ -20,16 +20,16 @@ async def handle_notification_choice(update: Update, context: ContextTypes.DEFAU
     """Handle user's choice about notifications."""
     query = update.callback_query
     if query is None:
-        logger.bind(username="system").warning("Received notification choice callback but query is None")
+        logger.warning("Received notification choice callback but query is None")
         return
 
-    username = get_username_from_query(query)
+    username = get_user_identity_from_query(query)
     user_lang = update.effective_user.language_code
     langpack: BaseLangPack = context.application.bot_data["languages"].from_langcode(user_lang)
 
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.bind(username="system").error("Session factory not initialized in handle_get_status")
+        logger.error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
@@ -38,7 +38,7 @@ async def handle_notification_choice(update: Update, context: ContextTypes.DEFAU
     user_id = context.user_data.get("registering_user_id")
     if user_id is None:
         callback_user_id = query.from_user.id if query.from_user else "unknown"
-        logger.bind(username=username).warning(
+        logger.warning(
             f"Notification choice received but no registering_user_id in context. "
             f"Callback from user_id={callback_user_id}"
         )
@@ -51,7 +51,7 @@ async def handle_notification_choice(update: Update, context: ContextTypes.DEFAU
 
     user = await get_user_from_db(session_factory, user_id)
     if user is None:
-        logger.bind(username="system").error("User not found in database during notification choice update")
+        logger.error("User not found in database during notification choice update")
         await query.edit_message_text(langpack.ERR_USER_NOT_FOUND)
         return
 
@@ -62,7 +62,7 @@ async def handle_notification_choice(update: Update, context: ContextTypes.DEFAU
         if db_user:
             db_user.notifs_enabled = notifs_enabled
             await session.commit()
-            logger.bind(username="system").info(f"Updated user user_id={user_id}: notifs_enabled={notifs_enabled}")
+            logger.info(f"Updated user user_id={user_id}: notifs_enabled={notifs_enabled}")
 
     if notifs_enabled:
         # Ask about night notification sound
@@ -70,7 +70,7 @@ async def handle_notification_choice(update: Update, context: ContextTypes.DEFAU
             langpack.MSG_NOTIFICATIONS_ON,
             reply_markup=get_night_sound_choice_keyboard(langpack),
         )
-        logger.bind(username="system").info(f"Waiting for night sound preference from user_id={user_id} ...")
+        logger.info(f"Waiting for night sound preference from user_id={user_id} ...")
     else:
         is_reconfiguration = context.user_data.get("is_reconfiguration", False)
         completion_text = get_completion_message(langpack, is_reconfiguration, notifications_enabled=False)

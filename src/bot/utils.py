@@ -106,20 +106,24 @@ def is_nighttime() -> bool:
     return hour >= NIGHT_START_HOUR or hour < NIGHT_END_HOUR
 
 
-def get_username_from_update(update: Update) -> str:
+def get_user_identity_from_update(update: Update) -> str:
     """Extract username from update for logging."""
     user = update.effective_user
     if user is None:
-        return "unknown"
-    return user.username or user.first_name or f"user_{user.id}" or "unknown"
+        return "Unknown(null)"
+    username = user.username or "User"
+    user_id = user.id
+    return f"{username}({user_id})"
 
 
-def get_username_from_query(query) -> str:
+def get_user_identity_from_query(query) -> str:
     """Extract username from callback query for logging."""
     if query is None or query.from_user is None:
-        return "unknown"
+        return "Unknown(null)"
     user = query.from_user
-    return user.username or user.first_name or f"user_{user.id}" or "unknown"
+    username = user.username or "User"
+    user_id = user.id
+    return f"{username}({user_id})"
 
 
 def check_generator_schedule(hour: int, minute: int = 0) -> tuple[bool, timedelta]:

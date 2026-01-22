@@ -5,7 +5,7 @@ from telegram.ext import (
 
 from src.bot.keyboards import get_main_keyboard
 from src.bot.lang_pack.base import BaseLangPack
-from src.bot.utils import get_username_from_update
+from src.bot.utils import get_user_identity_from_update
 from src.logger.main import logger
 
 
@@ -13,14 +13,14 @@ async def handle_report_error(update: Update, context: ContextTypes.DEFAULT_TYPE
     """Handle 'Report Error' button."""
     user = update.effective_user
     if user is None:
-        logger.bind(username="system").warning("Received report error request but effective_user is None")
+        logger.warning("Received report error request but effective_user is None")
         return
 
-    username = get_username_from_update(update)
+    u_identity = get_user_identity_from_update(update)
     user_lang = update.effective_user.language_code
     langpack: BaseLangPack = context.application.bot_data["languages"].from_langcode(user_lang)
 
-    logger.bind(username=username).info("User requested to report an error")
+    logger.bind(username=u_identity).info("User requested to report an error")
     await update.message.reply_text(
         langpack.MSG_REPORT_ERROR,
         reply_markup=get_main_keyboard(langpack),

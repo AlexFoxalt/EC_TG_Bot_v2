@@ -10,7 +10,7 @@ __all__ = ["get_logger", "logger"]
 
 DEFAULT_LOGGER_NAME = "tg-bot"
 DEFAULT_MESSAGE_FORMAT = (
-    "<m>{time:YYYY-MM-DD HH:mm:ss.SSS}</m> | <level>{level: <8}</level> | {extra[username]:<20} | {message}"
+    "<m>{time:YYYY-MM-DD HH:mm:ss.SSS}</m> | <level>{level: <8}</level> | {extra[username]:<25} | {message}"
 )
 
 

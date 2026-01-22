@@ -34,20 +34,20 @@ if TYPE_CHECKING:
 
 def start_bot() -> None:
     """Initialize and start the Telegram bot."""
-    logger.bind(username="system").info("Initializing Telegram bot...")
+    logger.info("Initializing Telegram bot...")
 
     # Create database session factory
     database_url = get_database_url()
-    logger.bind(username="system").info("Creating database engine connection (host from env)")
+    logger.info("Creating database engine connection (host from env)")
     engine = create_async_engine(
         database_url,
         pool_pre_ping=True,
     )
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    logger.bind(username="system").info("Database session factory created successfully")
+    logger.info("Database session factory created successfully")
 
     app = ApplicationBuilder().token(_require_env("TELEGRAM_TOKEN")).build()
-    logger.bind(username="system").info("Telegram application builder initialized")
+    logger.info("Telegram application builder initialized")
 
     rate_limit_per_sec = float(os.getenv("BOT_NOTIF_RATE_LIMIT_PER_SEC", "20"))
     max_concurrency = int(os.getenv("BOT_NOTIF_MAX_CONCURRENCY", "10"))
@@ -56,13 +56,11 @@ def start_bot() -> None:
     if max_concurrency <= 0:
         max_concurrency = 1
 
-    logger.bind(username="system").info(
-        f"Notification rate limiting configured: {rate_limit_per_sec:.1f}/s, max_concurrency={max_concurrency}"
-    )
+    logger.info(f"Notification rate limiting configured: {rate_limit_per_sec:.1f}/s, max_concurrency={max_concurrency}")
 
     languages = LangContainer()
     language_list = list(languages)
-    logger.bind(username="system").info(f"Langpack initialized. Available languages: {language_list}")
+    logger.info(f"Langpack initialized. Available languages: {language_list}")
 
     # Shared state
     app.bot_data["app"]: Application = app
@@ -100,7 +98,7 @@ def start_bot() -> None:
         interval=interval,
         first=1,  # Start after 1 second
     )
-    logger.bind(username="system").info(f"Notification polling task scheduled every {interval:.1f}s secs...")
+    logger.info(f"Notification polling task scheduled every {interval:.1f}s secs...")
 
-    logger.bind(username="system").info("Bot started and ready to receive messages - starting polling...")
+    logger.info("Bot started and ready to receive messages - starting polling...")
     app.run_polling()

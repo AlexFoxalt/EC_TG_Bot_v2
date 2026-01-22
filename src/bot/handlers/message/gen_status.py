@@ -10,7 +10,7 @@ from telegram.ext import (
 from src.bot.constants import KYIV_TZ, SECS_IN_MINUTE, MINS_IN_HOUR
 from src.bot.keyboards import get_main_keyboard
 from src.bot.lang_pack.base import BaseLangPack
-from src.bot.utils import get_username_from_update, check_generator_schedule
+from src.bot.utils import get_user_identity_from_update, check_generator_schedule
 from src.db.models import Status
 from src.enums import Label
 from src.logger.main import logger
@@ -19,19 +19,19 @@ from src.logger.main import logger
 async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     if user is None:
-        logger.bind(username="system").warning("Received generator status request but effective_user is None")
+        logger.warning("Received generator status request but effective_user is None")
         return
-    username = get_username_from_update(update)
+    u_identity = get_user_identity_from_update(update)
     user_lang = update.effective_user.language_code
     langpack: BaseLangPack = context.application.bot_data["languages"].from_langcode(user_lang)
 
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.bind(username="system").error("Session factory not initialized in handle_get_status")
+        logger.error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
-    logger.bind(username=username).info("User requested generator status")
+    logger.bind(username=u_identity).info("User requested generator status")
 
     async with session_factory() as session:
         # Get latest status ordered by date_created DESC
@@ -55,8 +55,12 @@ async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         latest_gen_status = result.scalar_one_or_none()
 
         if not latest_gen_status:
-            logger.bind(username="system").error("Generator status not found")
+            logger.error("Generator status not found")
             return
+
+        logger.info(
+            f"Retrieved latest [{gen_label}] status value={latest_gen_status.value}, date_created={latest_gen_status.date_created.isoformat()}"
+        )
 
     curr_time = datetime.now(KYIV_TZ)
     sched_status, sched_next_switch_td = check_generator_schedule(curr_time.hour, curr_time.minute)
@@ -96,7 +100,7 @@ async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         # Generator is actually OFF and schedule said it should be OFF
         message = f"{langpack.MSG_GEN_OFF}\n\n{langpack.MSG_GEN_TIME_TILL_ON} {next_switch_sub_text}"
     else:
-        logger.bind(username="system").warning("Somehow no generator business logic case match")
+        logger.warning("Somehow no generator business logic case match")
         message = "Error"
 
     await update.message.reply_text(
