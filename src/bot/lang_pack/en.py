@@ -20,7 +20,7 @@ class ENLangPack(BaseLangPack):
     )
     MSG_WELCOME_USER = "Welcome, {username}!"
     MSG_Q_ENABLE_NOTIFS = "Would you like to enable notifications (the bot will automatically send messages to the chat when the power is turned on/off)?"
-    MSG_GEN_NOT_REQUIRED = "⚡️ There is power in the house ⚡️\n\nGenerator is not required"
+    MSG_GEN_NOT_REQUIRED = "⚡️ Power is ON ⚡️\n\nGenerator not required"
     MSG_GEN_ON = "🔋 *Generator is RUNNING* 🔋"
     MSG_GEN_OFF = "🪫 *Generator is NOT RUNNING* 🪫"
     MSG_GEN_TIME_TILL_OFF = "⏳ According to schedule, until shutdown:"
@@ -41,15 +41,15 @@ class ENLangPack(BaseLangPack):
     MSG_SETTINGS_UPDATED = "Settings updated ✅"
 
     NOTIF_ATTENTION = "📢️  *ATTENTION*  📢"
-    NOTIF_POWER_TURN_ON_TIME = "⏳Power was on"
-    NOTIF_POWER_TURN_OFF_TIME = "⏳Power was off"
+    NOTIF_POWER_TURN_ON_TIME = "⏳Power was on for"
+    NOTIF_POWER_TURN_OFF_TIME = "⏳Power was off for"
     NOTIF_FOOTER = "_You received this message because you enabled notifications in the bot settings\\. You can disable them at any time\\._"
 
     WORD_MINUTES = "min"
     WORD_HOURS = "h"
     WORD_AND = "and"
     WORD_USER = "User"
-    WORD_ELECTRICITY = "Electricity"
+    WORD_POWER = "Power is"
     WORD_ENABLED_LOWER = "enabled"
     WORD_DISABLED_LOWER = "disabled"
 

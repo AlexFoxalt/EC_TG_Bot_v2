@@ -50,7 +50,7 @@ class RULangPack(BaseLangPack):
     WORD_HOURS = "ч"
     WORD_AND = "и"
     WORD_USER = "Пользователь"
-    WORD_ELECTRICITY = "Электричество"
+    WORD_POWER = "Электричество"
     WORD_ENABLED_LOWER = "включено"
     WORD_DISABLED_LOWER = "выключено"
 

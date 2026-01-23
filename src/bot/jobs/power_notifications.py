@@ -36,7 +36,7 @@ async def _send_status_notification(
     to_text = "ON" if to_status else "OFF"
     to_emoji = "🟢" if to_status else "🔴"
 
-    changes_text = f"{langpack.NOTIF_ATTENTION}\n\n{to_emoji}  {langpack.WORD_ELECTRICITY} {to_text}  {to_emoji}\n"
+    changes_text = f"{langpack.NOTIF_ATTENTION}\n\n{to_emoji}  {langpack.WORD_POWER} {to_text}  {to_emoji}\n"
 
     time_diff_text = ""
     if time_diff:

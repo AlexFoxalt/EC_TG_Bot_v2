@@ -49,7 +49,7 @@ class UKLangPack(BaseLangPack):
     WORD_HOURS = "г"
     WORD_AND = "і"
     WORD_USER = "Користувач"
-    WORD_ELECTRICITY = "Світло"
+    WORD_POWER = "Світло"
     WORD_ENABLED_LOWER = "увімкнено"
     WORD_DISABLED_LOWER = "вимкнено"
 
