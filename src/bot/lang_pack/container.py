@@ -5,25 +5,27 @@ from src.bot.lang_pack.uk import UKLangPack
 
 
 class LangContainer:
-    uk = UKLangPack()
-    ru = RULangPack()
-    en = ENLangPack()
-
-    _default = ru
-    _langcode_to_object_map = {"uk": uk, "ru": ru, "en": en}
-    _langcodes_as_list = list(_langcode_to_object_map.values())
-    _curr_i = 0
+    def __init__(self) -> None:
+        self.uk = UKLangPack()
+        self.ru = RULangPack()
+        self.en = ENLangPack()
+        self._default = self.ru
+        self._langcode_to_langpack = {"uk": self.uk, "ru": self.ru, "en": self.en}
+        self._langpacks_list = list(self._langcode_to_langpack.values())
+        self._curr_i = 0
 
     def from_langcode(self, lang_code: str) -> BaseLangPack:
-        return self._langcode_to_object_map.get(lang_code.lower(), self._default)
+        if not lang_code:
+            return self._default
+        return self._langcode_to_langpack.get(lang_code.lower(), self._default)
 
     def __iter__(self):
+        self._curr_i = 0
         return self
 
     def __next__(self):
-        if self._curr_i == len(self._langcodes_as_list):
-            self._curr_i = 0
+        if self._curr_i >= len(self._langpacks_list):
             raise StopIteration
-        val = self._langcodes_as_list[self._curr_i]
+        val = self._langpacks_list[self._curr_i]
         self._curr_i += 1
         return val
