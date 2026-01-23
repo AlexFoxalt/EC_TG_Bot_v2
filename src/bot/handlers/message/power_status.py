@@ -29,7 +29,7 @@ async def handle_power_status(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
-    logger.bind(username=u_identity).info("User requested electricity status")
+    logger.bind(username=u_identity).info("User requested power status")
 
     async with session_factory() as session:
         # Get latest status ordered by date_created DESC
