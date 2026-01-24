@@ -32,7 +32,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     async with session_factory() as session:
         # Check if user already exists
         result = await session.execute(select(User).where(User.id == user.id))
-        existing_user = result.scalar_one_or_none()
+        existing_user: User | None = result.scalar_one_or_none()
 
         welcome_msg = langpack.MSG_WELCOME_USER.format(username=user.first_name or user.username or langpack.WORD_USER)
         if existing_user:
@@ -40,6 +40,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 f"{welcome_msg}\n\n{langpack.MSG_USE_KEYBOARD}",
                 reply_markup=get_main_keyboard(langpack),
             )
+            if existing_user.language_code != user.language_code:
+                logger.info(
+                    f"Updating language for user user_id={user.id}: {existing_user.language_code} > {user.language_code}"
+                )
+                existing_user.language_code = user.language_code
             return
 
         # New user - create user record
