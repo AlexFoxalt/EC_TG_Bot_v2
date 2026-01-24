@@ -45,6 +45,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     f"Updating language for user user_id={user.id}: {existing_user.language_code} > {user.language_code}"
                 )
                 existing_user.language_code = user.language_code
+                await session.commit()
             return
 
         # New user - create user record
