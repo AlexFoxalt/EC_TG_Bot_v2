@@ -29,7 +29,7 @@ async def handle_night_sound_choice(update: Update, context: ContextTypes.DEFAUL
 
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.error("Session factory not initialized in handle_get_status")
+        logger.bind(username=u_identity).error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
@@ -37,11 +37,7 @@ async def handle_night_sound_choice(update: Update, context: ContextTypes.DEFAUL
 
     user_id = context.user_data.get("registering_user_id")
     if user_id is None:
-        callback_user_id = query.from_user.id if query.from_user else "unknown"
-        logger.warning(
-            f"Night sound choice received but no registering_user_id in context. "
-            f"Callback from user_id={callback_user_id}"
-        )
+        logger.bind(username=u_identity).warning("Night sound choice received but no registering_user_id in context")
         await query.edit_message_text(langpack.ERR_SESSION_EXPIRED)
         return
 
@@ -51,7 +47,7 @@ async def handle_night_sound_choice(update: Update, context: ContextTypes.DEFAUL
 
     user = await get_user_from_db(session_factory, user_id)
     if user is None:
-        logger.error(f"User user_id={user_id} not found in database during night sound choice update")
+        logger.bind(username=u_identity).error("User not found in db during night sound choice update")
         await query.edit_message_text(langpack.ERR_USER_NOT_FOUND)
         return
 
@@ -62,7 +58,7 @@ async def handle_night_sound_choice(update: Update, context: ContextTypes.DEFAUL
         if db_user:
             db_user.night_notif_sound_enabled = night_sound_enabled
             await session.commit()
-            logger.info(f"User updated user_id={db_user.id}: night_notif_sound_enabled={night_sound_enabled}")
+            logger.bind(username=u_identity).info(f"User updated: night_notif_sound_enabled={night_sound_enabled}")
 
     is_reconfiguration = context.user_data.get("is_reconfiguration", False)
     completion_text = get_completion_message(

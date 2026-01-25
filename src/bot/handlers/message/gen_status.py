@@ -21,13 +21,14 @@ async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if user is None:
         logger.warning("Received generator status request but effective_user is None")
         return
+
     u_identity = get_user_identity_from_update(update)
     user_lang = update.effective_user.language_code
     langpack: BaseLangPack = context.application.bot_data["languages"].from_langcode(user_lang)
 
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.error("Session factory not initialized in handle_get_status")
+        logger.bind(username=u_identity).error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
@@ -55,10 +56,10 @@ async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         latest_gen_status = result.scalar_one_or_none()
 
         if not latest_gen_status:
-            logger.error("Generator status not found")
+            logger.bind(username=u_identity).error("Generator status not found")
             return
 
-        logger.info(
+        logger.bind(username=u_identity).info(
             f"Retrieved latest [{gen_label}] status value={latest_gen_status.value}, date_created={latest_gen_status.date_created.isoformat()}"
         )
 
@@ -100,7 +101,7 @@ async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         # Generator is actually OFF and schedule said it should be OFF
         message = f"{langpack.MSG_GEN_OFF}\n\n{langpack.MSG_GEN_TIME_TILL_ON} {next_switch_sub_text}"
     else:
-        logger.warning("Somehow no generator business logic case match")
+        logger.bind(username=u_identity).error("Somehow no generator business logic case match")
         message = "Error"
 
     await update.message.reply_text(

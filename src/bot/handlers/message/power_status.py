@@ -19,13 +19,14 @@ async def handle_power_status(update: Update, context: ContextTypes.DEFAULT_TYPE
     if user is None:
         logger.warning("Received power status request but effective_user is None")
         return
+
     u_identity = get_user_identity_from_update(update)
     user_lang = update.effective_user.language_code
     langpack: BaseLangPack = context.application.bot_data["languages"].from_langcode(user_lang)
 
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.error("Session factory not initialized in handle_get_status")
+        logger.bind(username=u_identity).error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
@@ -40,7 +41,7 @@ async def handle_power_status(update: Update, context: ContextTypes.DEFAULT_TYPE
         latest_status = result.scalar_one_or_none()
 
         if latest_status is None:
-            logger.bind(username=u_identity).warning("No status records of Status found in DB")
+            logger.bind(username=u_identity).warning(f"No status Status record with label [{power_label}] found in DB")
             await update.message.reply_text(
                 langpack.MSG_POWER_STATUS_NOT_AVAILABLE,
                 reply_markup=get_main_keyboard(langpack),
@@ -52,7 +53,7 @@ async def handle_power_status(update: Update, context: ContextTypes.DEFAULT_TYPE
         status_text = langpack.MSG_POWER_IS_ON if is_on else langpack.MSG_POWER_IS_OFF
         datetime_text = langpack.MSG_POWER_TURN_ON_TIME if is_on else langpack.MSG_POWER_TURN_OFF_TIME
         date_created_timezone = latest_status.date_created.astimezone(KYIV_TZ)
-        logger.info(
+        logger.bind(username=u_identity).info(
             f"Retrieved latest [{power_label}] status value={is_on}, date_created={latest_status.date_created.isoformat()}"
         )
 

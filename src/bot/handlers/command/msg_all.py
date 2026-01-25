@@ -26,23 +26,23 @@ async def msg_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.error("Session factory not initialized in handle_get_status")
+        logger.bind(username=u_identity).error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
     bot_app = context.application.bot_data["app"]
     if bot_app is None:
-        logger.error("Bot application not initialized - skipping notification check")
+        logger.bind(username=u_identity).error("Bot application not initialized - skipping notification check")
         return
 
     rate_limiter = context.application.bot_data["rate_limiter"]
     if rate_limiter is None:
-        logger.error("Rate limiter not initialized - skipping notification check")
+        logger.bind(username=u_identity).error("Rate limiter not initialized - skipping notification check")
         return
 
     semaphore = context.application.bot_data["semaphore"]
     if semaphore is None:
-        logger.error("Semaphore not initialized - skipping notification check")
+        logger.bind(username=u_identity).error("Semaphore not initialized - skipping notification check")
         return
 
     logger.bind(username=u_identity).info("Received /msg_all command from user")
@@ -53,11 +53,11 @@ async def msg_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         existing_user = result.scalar_one_or_none()
 
         if not existing_user:
-            logger.warning(f"User with ID {user.id} not found in DB")
+            logger.bind(username=u_identity).error("User not found in DB")
             return
 
         if not existing_user.is_admin:
-            logger.warning(f"User with ID {user.id} requested forbidden command /msgAll")
+            logger.bind(username=u_identity).warning("User requested forbidden command /msgAll")
             return
 
         result = await session.execute(select(User))
@@ -82,10 +82,10 @@ async def msg_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for result in results:
         if isinstance(result, Exception):
-            logger.error(f"Notification task failed with unexpected exception: {result!r}")
+            logger.error(f"Notification task failed with exception: {result!r}")
 
-    logger.info(f"Admin message successfully sent to {len(all_users)} users")
+    logger.bind(username=u_identity).info(f"Admin message successfully sent to {len(all_users)} users")
     await update.message.reply_text(
-        f"Message successfully sent to {len(all_users)} users",
+        f"Your message successfully sent to {len(all_users)} users",
         reply_markup=get_main_keyboard(langpack),
     )

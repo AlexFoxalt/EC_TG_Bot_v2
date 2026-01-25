@@ -15,13 +15,14 @@ async def handle_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if user is None:
         logger.warning("Received reconfigure setting request but effective_user is None")
         return
+
     u_identity = get_user_identity_from_update(update)
     user_lang = update.effective_user.language_code
     langpack: BaseLangPack = context.application.bot_data["languages"].from_langcode(user_lang)
 
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.error("Session factory not initialized in handle_get_status")
+        logger.bind(username=u_identity).error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
@@ -30,7 +31,7 @@ async def handle_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Verify user exists in database
     existing_user = await get_user_from_db(session_factory, user.id)
     if existing_user is None:
-        logger.warning(f"User user_id={user.id} not found in DB - redirecting to /start")
+        logger.bind(username=u_identity).warning("User not found in DB - redirecting to /start")
         await update.message.reply_text(
             langpack.MSG_USER_NOT_FOUND,
             reply_markup=get_main_keyboard(langpack),
@@ -46,6 +47,6 @@ async def handle_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Store user_id in context for callback handlers (same as registration flow)
     context.user_data["registering_user_id"] = user.id
     context.user_data["is_reconfiguration"] = True  # Mark as reconfiguration
-    logger.info(
-        f"Started notification settings reconfiguration for user_id={user.id} - waiting for notification preference..."
+    logger.bind(username=u_identity).info(
+        "Started notification settings reconfiguration - waiting for notification preference..."
     )

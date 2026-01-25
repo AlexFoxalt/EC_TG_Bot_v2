@@ -17,13 +17,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if user is None:
         logger.warning("Received /start command but effective_user is None")
         return
+
     u_identity = get_user_identity_from_update(update)
     user_lang = update.effective_user.language_code
     langpack: BaseLangPack = context.application.bot_data["languages"].from_langcode(user_lang)
 
     session_factory = context.application.bot_data["session_factory"]
     if session_factory is None:
-        logger.error("Session factory not initialized in handle_get_status")
+        logger.bind(username=u_identity).error("Session factory not initialized in handle_get_status")
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
@@ -41,15 +42,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 reply_markup=get_main_keyboard(langpack),
             )
             if existing_user.language_code != user.language_code:
-                logger.info(
-                    f"Updating language for user user_id={user.id}: {existing_user.language_code} > {user.language_code}"
+                logger.bind(username=u_identity).info(
+                    f"Updating language for user: {existing_user.language_code} -> {user.language_code}"
                 )
                 existing_user.language_code = user.language_code
                 await session.commit()
             return
 
         # New user - create user record
-        logger.info(f"New user detected user_id={user.id} -> Creating new DB record...")
+        logger.bind(username=u_identity).info("New user detected, creating DB record...")
         new_user = User(
             id=user.id,
             username=user.username,
@@ -62,7 +63,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         session.add(new_user)
         await session.commit()
-        logger.info(
+        logger.bind(username=u_identity).info(
             f"User record created successfully: "
             f"user_id={new_user.id}, "
             f"username={new_user.username}, "
@@ -81,4 +82,4 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         # Store user_id in context for callback handlers
         context.user_data["registering_user_id"] = user.id
-        logger.info(f"Started registration flow for user_id={user.id} - waiting for notification preference...")
+        logger.bind(username=u_identity).info("Started registration flow - waiting for notification preference...")
