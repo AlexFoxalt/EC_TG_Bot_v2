@@ -72,4 +72,4 @@ async def handle_notification_choice(update: Update, context: ContextTypes.DEFAU
         completion_text = get_completion_message(langpack, is_reconfiguration, notifications_enabled=False)
         await query.edit_message_text(completion_text)
         await query.message.reply_text(langpack.MSG_USE_KEYBOARD, reply_markup=get_main_keyboard(langpack))
-        await cleanup_registration_context(context, user_id)
+        await cleanup_registration_context(context, u_identity)

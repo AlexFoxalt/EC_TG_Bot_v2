@@ -66,4 +66,4 @@ async def handle_night_sound_choice(update: Update, context: ContextTypes.DEFAUL
     )
     await query.edit_message_text(completion_text)
     await query.message.reply_text(langpack.MSG_USE_KEYBOARD, reply_markup=get_main_keyboard(langpack))
-    await cleanup_registration_context(context, user_id)
+    await cleanup_registration_context(context, u_identity)

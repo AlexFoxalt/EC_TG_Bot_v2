@@ -16,13 +16,13 @@ from src.db.models import User
 from src.logger.main import logger
 
 
-async def cleanup_registration_context(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> None:
+async def cleanup_registration_context(context: ContextTypes.DEFAULT_TYPE, user_identity: str) -> None:
     """Clean up registration/reconfiguration context and log completion."""
     is_reconfiguration = context.user_data.get("is_reconfiguration", False)
     context.user_data.pop("registering_user_id", None)
     context.user_data.pop("is_reconfiguration", None)
-    logger.bind(username="system").info(
-        f"{'Settings reconfiguration' if is_reconfiguration else 'Registration'} flow for user_id={user_id} completed"
+    logger.bind(username=user_identity).info(
+        f"{'Settings reconfiguration' if is_reconfiguration else 'Registration'} flow completed"
     )
 
 
