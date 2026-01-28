@@ -10,7 +10,11 @@ from telegram.ext import (
 from src.bot.constants import KYIV_TZ, SECS_IN_MINUTE, MINS_IN_HOUR
 from src.bot.keyboards import get_main_keyboard
 from src.bot.lang_pack.base import BaseLangPack
-from src.bot.utils import get_user_identity_from_update, check_generator_schedule
+from src.bot.utils import (
+    get_user_identity_from_update,
+    get_generator_schedule_status,
+    get_generator_time_to_next_switch,
+)
 from src.db.models import Status
 from src.enums import Label
 from src.logger.main import logger
@@ -64,7 +68,8 @@ async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         )
 
     curr_time = datetime.now(KYIV_TZ)
-    sched_status, sched_next_switch_td = check_generator_schedule(curr_time.hour, curr_time.minute)
+    sched_status = get_generator_schedule_status(curr_time)
+    sched_next_switch_td = get_generator_time_to_next_switch(curr_time)
 
     next_switch_mins = sched_next_switch_td.seconds // SECS_IN_MINUTE
     if next_switch_mins > MINS_IN_HOUR:

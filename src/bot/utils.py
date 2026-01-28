@@ -10,7 +10,13 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, Application
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception, before_sleep_log
 
-from src.bot.constants import NIGHT_START_HOUR, NIGHT_END_HOUR, KYIV_TZ, GEN_WORKTIME_SCHEDULE
+from src.bot.constants import (
+    NIGHT_START_HOUR,
+    NIGHT_END_HOUR,
+    KYIV_TZ,
+    GEN_WORKTIME_SCHEDULE_WEEKDAY,
+    GEN_WORKTIME_SCHEDULE_WEEKEND,
+)
 from src.bot.lang_pack.base import BaseLangPack
 from src.db.models import User
 from src.logger.main import logger
@@ -126,16 +132,34 @@ def get_user_identity_from_query(query) -> str:
     return f"{username}({user_id})"
 
 
-def check_generator_schedule(hour: int, minute: int = 0) -> tuple[bool, timedelta]:
-    current_minutes = hour * 60 + minute
+def _get_gen_schedule_for_date(current_time: datetime) -> list[tuple[int, int, bool]]:
+    is_weekend = current_time.weekday() >= 5
+    return GEN_WORKTIME_SCHEDULE_WEEKEND if is_weekend else GEN_WORKTIME_SCHEDULE_WEEKDAY
 
-    for start_time, end_time, is_on in GEN_WORKTIME_SCHEDULE:
+
+def get_generator_schedule_status(current_time: datetime) -> bool:
+    current_minutes = current_time.hour * 60 + current_time.minute
+    schedule = _get_gen_schedule_for_date(current_time)
+
+    for start_time, end_time, is_on in schedule:
         if start_time <= current_minutes < end_time:
-            minutes_left = end_time - current_minutes
-            return is_on, timedelta(minutes=minutes_left)
+            return is_on
 
     # Safety fallback (should never happen)
-    return False, timedelta(0)
+    return False
+
+
+def get_generator_time_to_next_switch(current_time: datetime) -> timedelta:
+    current_minutes = current_time.hour * 60 + current_time.minute
+    schedule = _get_gen_schedule_for_date(current_time)
+
+    for start_time, end_time, _ in schedule:
+        if start_time <= current_minutes < end_time:
+            minutes_left = end_time - current_minutes
+            return timedelta(minutes=minutes_left)
+
+    # Safety fallback (should never happen)
+    return timedelta(0)
 
 
 async def get_user_from_db(session_factory: async_sessionmaker, user_id: int) -> User | None:
