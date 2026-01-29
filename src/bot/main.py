@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 from aiolimiter import AsyncLimiter
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from telegram import Update
+from telegram.error import NetworkError
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -30,6 +32,14 @@ from src.utils import _require_env, get_database_url
 
 if TYPE_CHECKING:
     from telegram.ext import Application
+
+
+async def handle_app_error(_: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    error = context.error
+    if isinstance(error, NetworkError) and "Bad Gateway" in str(error):
+        logger.bind(username="system").warning("Telegram polling temporary error: Bad Gateway")
+        return
+    logger.bind(username="system").error(f"Unhandled bot error: {type(error).__name__}: {error}")
 
 
 def start_bot() -> None:
@@ -71,6 +81,7 @@ def start_bot() -> None:
     app.bot_data["last_notified_status_id"]: int | None = None
 
     # Add handlers
+    app.add_error_handler(handle_app_error)
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("msgAll", msg_all))
     app.add_handler(CallbackQueryHandler(handle_notification_choice, pattern="^notif_(yes|no)$"))
