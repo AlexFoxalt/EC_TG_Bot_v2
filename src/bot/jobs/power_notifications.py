@@ -4,7 +4,7 @@ from aiolimiter import AsyncLimiter
 from telegram.ext import ContextTypes, Application
 from sqlalchemy import select, desc
 
-from src.bot.constants import MINS_IN_HOUR, SECS_IN_MINUTE
+from src.bot.constants import MINS_IN_HOUR, SECS_IN_MINUTE, POWER_SURGE_WARN_MINS
 from src.bot.lang_pack.base import BaseLangPack
 from src.bot.lang_pack.container import LangContainer
 from src.bot.utils import send_message_with_retry, is_nighttime
@@ -62,7 +62,7 @@ async def _send_status_notification(
             time_diff_text = f"{langpack.NOTIF_POWER_TURN_OFF_TIME} {text_suffix}"
 
     final_text = f"{changes_text}\n{time_diff_text}"
-    if time_diff < SECS_IN_MINUTE * 5:
+    if time_diff < SECS_IN_MINUTE * POWER_SURGE_WARN_MINS:
         # If changes time diff less than N mins -> probably power surge happened
         final_text = f"{final_text}\n\n{langpack.NOTIF_POWER_SURGE_WARN}"
     final_text = f"{final_text}\n\n{langpack.NOTIF_FOOTER}"
