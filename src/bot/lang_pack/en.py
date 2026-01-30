@@ -43,6 +43,7 @@ class ENLangPack(BaseLangPack):
     NOTIF_ATTENTION = "📢️  *ATTENTION*  📢"
     NOTIF_POWER_TURN_ON_TIME = "⏳Power was on for"
     NOTIF_POWER_TURN_OFF_TIME = "⏳Power was off for"
+    NOTIF_POWER_SURGE_WARN = "⚠️ It could be caused by a power surge\\."
     NOTIF_FOOTER = "_You received this message because you enabled notifications in the bot settings\\. You can disable them at any time\\._"
 
     WORD_MINUTES = "min"

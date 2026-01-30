@@ -36,7 +36,7 @@ async def _send_status_notification(
     to_text = "ON" if to_status else "OFF"
     to_emoji = "🟢" if to_status else "🔴"
 
-    changes_text = f"{langpack.NOTIF_ATTENTION}\n\n{to_emoji}  {langpack.WORD_POWER} {to_text}  {to_emoji}\n"
+    changes_text = f"{langpack.NOTIF_ATTENTION}\n\n{to_emoji}  {langpack.WORD_POWER} {to_text}  {to_emoji}"
 
     time_diff_text = ""
     if time_diff:
@@ -57,11 +57,15 @@ async def _send_status_notification(
             text_suffix = f"{diff_mins} {langpack.WORD_MINUTES}\\."
 
         if from_status and not to_status:
-            time_diff_text = f"{langpack.NOTIF_POWER_TURN_ON_TIME} {text_suffix}\n\n"
+            time_diff_text = f"{langpack.NOTIF_POWER_TURN_ON_TIME} {text_suffix}"
         elif not from_status and to_status:
-            time_diff_text = f"{langpack.NOTIF_POWER_TURN_OFF_TIME} {text_suffix}\n\n"
+            time_diff_text = f"{langpack.NOTIF_POWER_TURN_OFF_TIME} {text_suffix}"
 
-    final_text = changes_text + time_diff_text + langpack.NOTIF_FOOTER
+    final_text = f"{changes_text}\n{time_diff_text}"
+    if time_diff < SECS_IN_MINUTE * 5:
+        # If changes time diff less than N mins -> probably power surge happened
+        final_text = f"{final_text}\n\n{langpack.NOTIF_POWER_SURGE_WARN}"
+    final_text = f"{final_text}\n\n{langpack.NOTIF_FOOTER}"
 
     await send_message_with_retry(
         bot_app=bot_app,
