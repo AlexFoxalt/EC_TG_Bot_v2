@@ -45,7 +45,7 @@ def detect_power_value(current_dt: datetime, heartbeat_dt: datetime, interval: i
     # If the diff is within acceptable limits -> interpret as POWER_ON
     diff = current_dt - heartbeat_dt
     compare = int(interval) * WAIT_TILL_MAKE_DECISION
-    return diff.seconds <= compare
+    return diff.total_seconds() <= compare
 
 
 async def poll_once(session_factory: async_sessionmaker[AsyncSession], interval: int) -> None:
