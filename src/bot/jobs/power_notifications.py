@@ -189,7 +189,7 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
 
             time_diff = None
             if latest_status and previous_status:
-                time_diff = (latest_status.date_created - previous_status.date_created).seconds
+                time_diff = (latest_status.date_created - previous_status.date_created).total_seconds()
 
             # Send notifications to all enabled users concurrently with rate limiting
             tasks = [
@@ -202,7 +202,7 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
                         languages=languages,
                         previous_status=previous_status,
                         latest_status=latest_status,
-                        time_diff=time_diff,
+                        time_diff=int(time_diff),
                         is_night=is_night,
                     )
                 )
