@@ -1,7 +1,7 @@
 from src.bot.lang_pack.base import BaseLangPack
 
 
-class CHLangPack(BaseLangPack):
+class CSLangPack(BaseLangPack):
     BTN_POWER_STATUS = "💡 Elektřina 💡"
     BTN_GEN_STATUS = "🔋 Generátor 🔋"
     BTN_SETTINGS = "⚙️ Nastavení ⚙️"
@@ -65,4 +65,4 @@ class CHLangPack(BaseLangPack):
     ERR_SESSION_EXPIRED = "Relace vypršela. Použijte znovu příkaz /start."
 
     def __repr__(self) -> str:
-        return "CH"
+        return "CS"
