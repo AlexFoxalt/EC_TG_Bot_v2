@@ -20,7 +20,7 @@ async def handle_report_error(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_lang = update.effective_user.language_code
     langpack: BaseLangPack = context.application.bot_data["languages"].from_langcode(user_lang)
 
-    logger.bind(username=u_identity).info("🆘User requested to report an error")
+    logger.bind(username=u_identity).info("🆘 User requested to report an error")
     await update.message.reply_text(
         langpack.MSG_REPORT_ERROR,
         reply_markup=get_main_keyboard(langpack),

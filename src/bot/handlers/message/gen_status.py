@@ -36,7 +36,7 @@ async def handle_gen_status(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
-    logger.bind(username=u_identity).info("🔋User requested generator status")
+    logger.bind(username=u_identity).info("🔋 User requested generator status")
 
     async with session_factory() as session:
         # Get latest status ordered by date_created DESC

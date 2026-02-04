@@ -26,7 +26,7 @@ async def handle_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.message.reply_text(langpack.ERR_BOT_NOT_INITIALIZED)
         return
 
-    logger.bind(username=u_identity).info("⚙️User requested to reconfigure notification settings")
+    logger.bind(username=u_identity).info("⚙️ User requested to reconfigure notification settings")
 
     # Verify user exists in database
     existing_user = await get_user_from_db(session_factory, user.id)
