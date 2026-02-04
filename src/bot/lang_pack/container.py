@@ -1,4 +1,5 @@
 from src.bot.lang_pack.base import BaseLangPack
+from src.bot.lang_pack.ch import CHLangPack
 from src.bot.lang_pack.en import ENLangPack
 from src.bot.lang_pack.ru import RULangPack
 from src.bot.lang_pack.uk import UKLangPack
@@ -9,8 +10,14 @@ class LangContainer:
         self.uk = UKLangPack()
         self.ru = RULangPack()
         self.en = ENLangPack()
+        self.ch = CHLangPack()
         self._default = self.ru
-        self._langcode_to_langpack = {"uk": self.uk, "ru": self.ru, "en": self.en}
+        self._langcode_to_langpack = {
+            "uk": self.uk,
+            "ru": self.ru,
+            "en": self.en,
+            "ch": self.ch,
+        }
         self._langpacks_list = list(self._langcode_to_langpack.values())
         self._curr_i = 0
 
