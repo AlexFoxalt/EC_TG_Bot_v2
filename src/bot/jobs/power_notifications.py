@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 
 from aiolimiter import AsyncLimiter
 from telegram.ext import ContextTypes, Application
@@ -6,7 +7,6 @@ from sqlalchemy import select, desc
 
 from src.bot.constants import MINS_IN_HOUR, SECS_IN_MINUTE, POWER_SURGE_WARN_MINS
 from src.bot.lang_pack.base import BaseLangPack
-from src.bot.lang_pack.container import LangContainer
 from src.bot.utils import send_message_with_retry, is_nighttime
 from src.db.models import User, Status
 from src.enums import Label
@@ -21,7 +21,7 @@ async def _send_status_notification(
     user_id: int,
     from_status: bool,
     to_status: bool,
-    time_diff: int | None,
+    time_diff: int,
     disable_sound: bool = False,
 ) -> None:
     """Send status change notification to a user with retry logic.
@@ -29,40 +29,34 @@ async def _send_status_notification(
     This function will retry up to 3 times on transient errors (network, timeouts, etc.)
     but will not break the notification loop if it ultimately fails.
     """
-    if bot_app is None:
-        logger.error("Bot application not initialized - cannot send notification")
-        return
-
     to_text = "ON" if to_status else "OFF"
     to_emoji = "🟢" if to_status else "🔴"
-
     changes_text = f"{langpack.NOTIF_ATTENTION}\n\n{to_emoji}  {langpack.WORD_POWER} {to_text}  {to_emoji}"
-
     time_diff_text = ""
-    if time_diff:
-        diff_mins = time_diff // SECS_IN_MINUTE
-        if diff_mins > MINS_IN_HOUR:
-            # Convert minutes to hours if it's possible.
-            # "100500 mins elapsed" message looks weird.
-            diff_hours = diff_mins // MINS_IN_HOUR
-            diff_mins = diff_mins % MINS_IN_HOUR
 
-            if diff_mins == 0:
-                text_suffix = f"{diff_hours} {langpack.WORD_HOURS}\\."
-            else:
-                text_suffix = (
-                    f"{diff_hours} {langpack.WORD_HOURS}\\. {langpack.WORD_AND} {diff_mins} {langpack.WORD_MINUTES}\\."
-                )
+    diff_mins = time_diff // SECS_IN_MINUTE
+    if diff_mins >= MINS_IN_HOUR:
+        # Convert minutes to hours if it's possible.
+        # "100500 mins elapsed" message looks weird.
+        diff_hours = diff_mins // MINS_IN_HOUR
+        diff_mins = diff_mins % MINS_IN_HOUR
+
+        if diff_mins == 0:
+            text_suffix = f"{diff_hours} {langpack.WORD_HOURS}\\."
         else:
-            text_suffix = f"{diff_mins} {langpack.WORD_MINUTES}\\."
+            text_suffix = (
+                f"{diff_hours} {langpack.WORD_HOURS}\\. {langpack.WORD_AND} {diff_mins} {langpack.WORD_MINUTES}\\."
+            )
+    else:
+        text_suffix = f"{diff_mins} {langpack.WORD_MINUTES}\\."
 
-        if from_status and not to_status:
-            time_diff_text = f"{langpack.NOTIF_POWER_TURN_ON_TIME} {text_suffix}"
-        elif not from_status and to_status:
-            time_diff_text = f"{langpack.NOTIF_POWER_TURN_OFF_TIME} {text_suffix}"
+    if from_status and not to_status:
+        time_diff_text = f"{langpack.NOTIF_POWER_TURN_ON_TIME} {text_suffix}"
+    elif not from_status and to_status:
+        time_diff_text = f"{langpack.NOTIF_POWER_TURN_OFF_TIME} {text_suffix}"
 
-    final_text = f"{changes_text}\n{time_diff_text}"
-    if time_diff < SECS_IN_MINUTE * POWER_SURGE_WARN_MINS:
+    final_text = f"{changes_text}\n{time_diff_text}" if time_diff_text else changes_text
+    if time_diff is not None and time_diff < SECS_IN_MINUTE * POWER_SURGE_WARN_MINS:
         # If changes time diff less than N mins -> probably power surge happened
         final_text = f"{final_text}\n\n{langpack.NOTIF_POWER_SURGE_WARN}"
     final_text = f"{final_text}\n\n{langpack.NOTIF_FOOTER}"
@@ -81,63 +75,35 @@ def _set_last_notified(status_id: int, bot_data: dict) -> None:
     bot_data["last_notified_status_id"] = status_id
 
 
-async def _send_notification_task(
-    bot_app: Application,
-    rate_limiter: AsyncLimiter,
-    semaphore: asyncio.Semaphore,
-    languages: LangContainer,
-    user: User,
-    previous_status: Status,
-    latest_status: Status,
-    time_diff: int | None,
-    is_night: bool,
-) -> None:
-    try:
-        langpack = languages.from_langcode(user.language_code)
-        disable_sound = is_night and not user.night_notif_sound_enabled
-        await _send_status_notification(
-            bot_app=bot_app,
-            rate_limiter=rate_limiter,
-            semaphore=semaphore,
-            langpack=langpack,
-            user_id=user.id,
-            from_status=previous_status.value,
-            to_status=latest_status.value,
-            time_diff=time_diff,
-            disable_sound=disable_sound,
-        )
-    except Exception as e:
-        logger.error(f"Notification task failed for user_id={user.id}: {e!r}")
-        return
+def _get_required_bot_data(bot_data: dict, key: str, label: str) -> Any | None:
+    value = bot_data.get(key)
+    if value is None:
+        logger.error(f"{label} not initialized - skipping notification check")
+    return value
 
 
 async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Check for new status changes and send notifications to enabled users."""
     bot_data = context.application.bot_data
 
-    session_factory = bot_data.get("session_factory")
+    session_factory = _get_required_bot_data(bot_data, "session_factory", "Session factory")
     if session_factory is None:
-        logger.error("Session factory not initialized - skipping notification check")
         return
 
-    bot_app = bot_data.get("app")
+    bot_app = _get_required_bot_data(bot_data, "app", "Bot application")
     if bot_app is None:
-        logger.error("Bot application not initialized - skipping notification check")
         return
 
-    rate_limiter = bot_data.get("rate_limiter")
+    rate_limiter = _get_required_bot_data(bot_data, "rate_limiter", "Rate limiter")
     if rate_limiter is None:
-        logger.error("Rate limiter not initialized - skipping notification check")
         return
 
-    semaphore = bot_data.get("semaphore")
+    semaphore = _get_required_bot_data(bot_data, "semaphore", "Semaphore")
     if semaphore is None:
-        logger.error("Semaphore not initialized - skipping notification check")
         return
 
-    languages = bot_data.get("languages")
+    languages = _get_required_bot_data(bot_data, "languages", "Languages")
     if languages is None:
-        logger.error("Languages not initialized - skipping notification check")
         return
 
     try:
@@ -150,7 +116,7 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
             statuses = result.scalars().all()
 
             if not statuses:
-                logger.debug(f"No status records with label: {power_label} found - skipping notification check")
+                logger.info(f"No status records with label: {power_label} found - skipping notification check")
                 return
 
             latest_status = statuses[0]
@@ -172,7 +138,7 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
                 return
 
             # Status has changed - get all users with notifications enabled
-            users_result = await session.execute(select(User).where(User.notifs_enabled == True))  # noqa
+            users_result = await session.execute(select(User).where(User.notifs_enabled.is_(True)))
             users = users_result.scalars().all()
 
             if not users:
@@ -180,44 +146,53 @@ async def check_and_send_notifications(context: ContextTypes.DEFAULT_TYPE) -> No
                 _set_last_notified(latest_status.id, bot_data)
                 return
 
-            # Determine if it's night time
-            is_night = is_nighttime()
-            logger.info(
-                f"Status change detected: {previous_status.value} → {latest_status.value}, "
-                f"is_night={is_night}, notifying {len(users)} users..."
-            )
+        # Determine if it's night time
+        is_night = is_nighttime()
+        logger.info(
+            f"Status change detected: {previous_status.value} → {latest_status.value}, "
+            f"is_night={is_night}, notifying {len(users)} users..."
+        )
 
-            time_diff = None
-            if latest_status and previous_status:
-                time_diff = (latest_status.date_created - previous_status.date_created).total_seconds()
+        time_diff_seconds = int((latest_status.date_created - previous_status.date_created).total_seconds())
 
-            # Send notifications to all enabled users concurrently with rate limiting
-            tasks = [
-                asyncio.create_task(
-                    _send_notification_task(
-                        bot_app=bot_app,
-                        rate_limiter=rate_limiter,
-                        semaphore=semaphore,
-                        user=user,
-                        languages=languages,
-                        previous_status=previous_status,
-                        latest_status=latest_status,
-                        time_diff=int(time_diff),
-                        is_night=is_night,
-                    )
+        # Send notifications to all enabled users concurrently with rate limiting
+        tasks: list[asyncio.Task] = []
+        task_user_ids: dict[asyncio.Task, int] = {}
+        for user in users:
+            langpack = languages.from_langcode(user.language_code)
+            disable_sound = is_night and not user.night_notif_sound_enabled
+            task = asyncio.create_task(
+                _send_status_notification(
+                    bot_app=bot_app,
+                    rate_limiter=rate_limiter,
+                    semaphore=semaphore,
+                    langpack=langpack,
+                    user_id=user.id,
+                    from_status=previous_status.value,
+                    to_status=latest_status.value,
+                    time_diff=time_diff_seconds,
+                    disable_sound=disable_sound,
                 )
-                for user in users
-            ]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            for result in results:
-                if isinstance(result, Exception):
-                    logger.error(f"Notification task failed with exception: {result!r}")
-
-            # Update last notified status ID
-            _set_last_notified(latest_status.id, bot_data)
-            logger.info(
-                f"Notifications sent for status change, last_notified_status_id={bot_data['last_notified_status_id']}"
             )
+            tasks.append(task)
+            task_user_ids[task] = user.id
+
+        if not tasks:
+            logger.info("No notification tasks created - skipping notification send")
+            _set_last_notified(latest_status.id, bot_data)
+            return
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for task, result in zip(tasks, results):
+            if isinstance(result, Exception):
+                user_id = task_user_ids.get(task, "unknown")
+                logger.error(f"Notification task failed for user_id={user_id}: {result!r}")
+
+        # Update last notified status ID
+        _set_last_notified(latest_status.id, bot_data)
+        logger.info(
+            f"Notifications sent for status change, last_notified_status_id={bot_data['last_notified_status_id']}"
+        )
 
     except Exception as e:
         logger.error(f"Error in check_and_send_notifications: {e!r}", exc_info=True)
