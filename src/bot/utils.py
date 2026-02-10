@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, Application
+from telegram.error import TimedOut, NetworkError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception, before_sleep_log
 
 from src.bot.constants import (
@@ -36,6 +37,10 @@ def _is_retryable_telegram_exception(exc: Exception) -> bool:
     """Check if exception is retryable (transient network/API errors for Telegram)."""
     # Retry on network-related errors
     if isinstance(exc, (ConnectionError, TimeoutError, OSError)):
+        return True
+
+    # Retry on telegram library specific errors
+    if isinstance(exc, (TimedOut, NetworkError)):
         return True
 
     # Check for Telegram-specific exceptions
@@ -75,7 +80,7 @@ def _is_retryable_telegram_exception(exc: Exception) -> bool:
     wait=wait_exponential(multiplier=1, min=1, max=5),
     retry=retry_if_exception(_is_retryable_telegram_exception),
     reraise=True,  # Reraise after retries - we'll catch in outer function
-    before_sleep=before_sleep_log(logger.bind(username="system"), "WARNING"),
+    before_sleep=before_sleep_log(logger, "WARNING"),
 )
 async def send_message_with_retry(
     bot_app: Application,
