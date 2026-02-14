@@ -10,12 +10,13 @@ from telegram.ext import (
 from src.bot.constants import KYIV_TZ, SECS_IN_MINUTE, MINS_IN_HOUR
 from src.bot.keyboards import get_main_keyboard
 from src.bot.lang_pack.base import BaseLangPack
-from src.bot.utils import get_user_identity_from_update
+from src.bot.utils import get_user_identity_from_update, button_rate_limited
 from src.db.models import Status
 from src.enums import Label
 from src.logger.main import logger
 
 
+@button_rate_limited
 async def handle_power_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     if user is None:

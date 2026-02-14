@@ -5,10 +5,11 @@ from telegram.ext import (
 
 from src.bot.keyboards import get_main_keyboard, get_notification_choice_keyboard
 from src.bot.lang_pack.base import BaseLangPack
-from src.bot.utils import get_user_identity_from_update, get_user_from_db
+from src.bot.utils import get_user_identity_from_update, get_user_from_db, button_rate_limited
 from src.logger.main import logger
 
 
+@button_rate_limited
 async def handle_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle 'Notification settings' button - allow user to reconfigure notification preferences."""
     user = update.effective_user

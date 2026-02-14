@@ -1,5 +1,6 @@
 import asyncio
 import os
+from collections import deque
 from typing import TYPE_CHECKING
 
 from aiolimiter import AsyncLimiter
@@ -72,6 +73,15 @@ def start_bot() -> None:
     language_list = list(languages)
     logger.info(f"Langpack initialized. Available languages: {language_list}")
 
+    button_rate_limit_per_sec = int(os.getenv("BOT_BUTTON_RATE_LIMIT_PER_SEC", "3"))
+    if button_rate_limit_per_sec <= 0:
+        button_rate_limit_per_sec = 1
+    button_rate_limit_window_seconds = 1.0
+    logger.info(
+        "Button rate limiting configured: "
+        f"{button_rate_limit_per_sec}/s per user, window={button_rate_limit_window_seconds:.1f}s"
+    )
+
     # Shared state
     app.bot_data["app"]: Application = app
     app.bot_data["session_factory"]: async_sessionmaker[AsyncSession] = session_factory
@@ -79,6 +89,9 @@ def start_bot() -> None:
     app.bot_data["semaphore"]: asyncio.Semaphore = asyncio.Semaphore(max_concurrency)
     app.bot_data["languages"]: LangContainer = languages
     app.bot_data["last_notified_status_id"]: int | None = None
+    app.bot_data["button_rate_limit_per_sec"]: int = button_rate_limit_per_sec
+    app.bot_data["button_rate_limit_window_seconds"]: float = button_rate_limit_window_seconds
+    app.bot_data["button_rate_limit_buckets"]: dict[int, deque[float]] = {}
 
     # Add handlers
     app.add_error_handler(handle_app_error)
@@ -89,14 +102,28 @@ def start_bot() -> None:
 
     # Language-specific commands (mainly from keyboard)
     app.add_handler(
-        MessageHandler(filters.Regex(build_button_pattern("BTN_POWER_STATUS", language_list)), handle_power_status)
+        MessageHandler(
+            filters.Regex(build_button_pattern("BTN_POWER_STATUS", language_list)),
+            handle_power_status,
+        )
     )
     app.add_handler(
-        MessageHandler(filters.Regex(build_button_pattern("BTN_GEN_STATUS", language_list)), handle_gen_status)
+        MessageHandler(
+            filters.Regex(build_button_pattern("BTN_GEN_STATUS", language_list)),
+            handle_gen_status,
+        )
     )
-    app.add_handler(MessageHandler(filters.Regex(build_button_pattern("BTN_SETTINGS", language_list)), handle_settings))
     app.add_handler(
-        MessageHandler(filters.Regex(build_button_pattern("BTN_REPORT_ERROR", language_list)), handle_report_error)
+        MessageHandler(
+            filters.Regex(build_button_pattern("BTN_SETTINGS", language_list)),
+            handle_settings,
+        )
+    )
+    app.add_handler(
+        MessageHandler(
+            filters.Regex(build_button_pattern("BTN_REPORT_ERROR", language_list)),
+            handle_report_error,
+        )
     )
 
     # Start notification polling task

@@ -1,6 +1,9 @@
 import asyncio
+import time
+from collections import deque
 from datetime import datetime, timedelta
 import re
+from typing import Callable
 
 from aiolimiter import AsyncLimiter
 from sqlalchemy import select
@@ -205,3 +208,34 @@ def get_completion_message(
 def build_button_pattern(attr: str, languages: list[BaseLangPack]) -> str:
     options = [re.escape(getattr(lang, attr)) for lang in languages]
     return f"^(?:{'|'.join(options)})$"
+
+
+def allow_button_press(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
+    buckets = context.application.bot_data["button_rate_limit_buckets"]
+    bucket = buckets.get(user_id)
+    if bucket is None:
+        bucket = deque()
+        buckets[user_id] = bucket
+
+    now = time.monotonic()
+    window = context.application.bot_data["button_rate_limit_window_seconds"]
+    while bucket and now - bucket[0] > window:
+        bucket.popleft()
+
+    rate = context.application.bot_data["button_rate_limit_per_sec"]
+    if len(bucket) >= rate:
+        return False
+
+    bucket.append(now)
+    return True
+
+
+def button_rate_limited(handler: Callable):
+    async def _wrapped(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        user = update.effective_user
+        if user is not None and not allow_button_press(context, user.id):
+            logger.warning(f"Max requests exceeded by user: {user.id}")
+            return
+        await handler(update, context)
+
+    return _wrapped
